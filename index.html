@@ -528,347 +528,299 @@
     </div>
   </div>
 
+  <!-- 6. Interactive Player Comparison Modal (1-3 Players) -->
+  <div id="compareModal" class="fixed inset-0 z-50 bg-slate-950/85 backdrop-blur-md hidden items-center justify-center p-3 sm:p-4">
+    <div class="bg-[#0c1426] border border-cyan-500/40 rounded-2xl max-w-4xl w-full max-h-[90vh] flex flex-col shadow-2xl overflow-hidden glow-cyan">
+      <div class="p-3.5 sm:p-4 border-b border-[#182645] flex items-center justify-between bg-[#091122]">
+        <div class="flex items-center gap-2.5">
+          <div class="w-8 h-8 rounded-xl bg-cyan-500/20 text-cyan-400 flex items-center justify-center font-bold">
+            <i class="fa-solid fa-scale-balanced"></i>
+          </div>
+          <div>
+            <h3 class="font-bold text-sm text-slate-100">Head-to-Head Player Comparison &amp; Advisor</h3>
+            <p class="text-[11px] text-cyan-400">Contextual decision analysis based on your current pick, turn gap &amp; roster need</p>
+          </div>
+        </div>
+        <button onclick="window.closeCompareModal()" class="text-slate-400 hover:text-slate-200">
+          <i class="fa-solid fa-xmark text-lg"></i>
+        </button>
+      </div>
+
+      <div class="p-4 overflow-y-auto flex-1 space-y-4 custom-scrollbar" id="compareModalContent">
+        <!-- Rendered dynamically by openCompareModal -->
+      </div>
+
+      <div class="p-3 border-t border-[#182645] bg-[#080e1c] flex items-center justify-between text-xs">
+        <button onclick="window.clearCompare()" class="px-3 py-1.5 text-slate-400 hover:text-rose-400 font-bold transition flex items-center gap-1.5">
+          <i class="fa-solid fa-trash-can text-[11px]"></i> Clear Comparison
+        </button>
+        <button onclick="window.closeCompareModal()" class="px-4 py-1.5 bg-[#16233e] hover:bg-[#203254] text-slate-200 font-bold rounded-xl transition">
+          Close
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Floating Comparison Drawer (Bottom Center) -->
+  <div id="compareTray" class="fixed bottom-4 left-1/2 -translate-x-1/2 z-40 bg-[#0d162d]/95 backdrop-blur-md border border-cyan-500/50 shadow-2xl rounded-2xl px-4 py-2.5 hidden items-center gap-3 text-xs font-mono glow-cyan">
+    <div class="flex items-center gap-2">
+      <span class="w-6 h-6 rounded-full bg-cyan-500/20 text-cyan-400 font-black text-[11px] flex items-center justify-center" id="compareCountLabel">0</span>
+      <span class="text-slate-300 font-bold hidden sm:inline" id="comparePlayerNamesSummary">Comparing players</span>
+    </div>
+    <div class="flex items-center gap-1.5">
+      <button onclick="window.openCompareModal()" class="px-3 py-1.5 bg-gradient-to-r from-cyan-600 to-emerald-600 hover:from-cyan-500 hover:to-emerald-500 text-white font-bold text-xs rounded-xl shadow transition flex items-center gap-1.5">
+        <i class="fa-solid fa-scale-balanced text-[11px]"></i> Advise Pick
+      </button>
+      <button onclick="window.clearCompare()" class="p-1.5 text-slate-400 hover:text-rose-400 transition" title="Clear All">
+        <i class="fa-solid fa-xmark text-sm"></i>
+      </button>
+    </div>
+  </div>
+
   <!-- ========================================== -->
   <!-- JAVASCRIPT ENGINE & DATABASE               -->
   <!-- ========================================== -->
   <script>
-    /* --- OFFICIAL 2026 ESPN PPR TOP 300 DATABASE --- */
-    const ESPN_TOP_300_SEED = [
-      // --- RANKINGS 1 - 40 ---
-      { rank: 1, posRank: 'RB1', name: 'Jahmyr Gibbs', team: 'DET', bye: 6, pos: 'RB', proj: 325, adp: 1.1, health: 'CLEAN', note: 'ESPN #1 Overall. Elite 3-down bellcow behind dominant Detroit offensive line.' },
-      { rank: 2, posRank: 'RB2', name: 'Bijan Robinson', team: 'ATL', bye: 11, pos: 'RB', proj: 320, adp: 2.1, health: 'CLEAN', note: 'Generational three-down talent with massive touch share and goal line monopoly.' },
-      { rank: 3, posRank: 'WR1', name: "Ja'Marr Chase", team: 'CIN', bye: 6, pos: 'WR', proj: 315, adp: 3.2, health: 'CLEAN', note: 'Alpha WR1 overall ceiling; unmatched target share and explosive weekly ceiling.' },
-      { rank: 4, posRank: 'WR2', name: 'Puka Nacua', team: 'LAR', bye: 11, pos: 'WR', proj: 308, adp: 4.2, health: 'CLEAN', note: 'Primary engine in McVay timing pass offense; elite separation metrics.' },
-      { rank: 5, posRank: 'WR3', name: 'Jaxon Smith-Njigba', team: 'SEA', bye: 11, pos: 'WR', proj: 302, adp: 5.1, health: 'CLEAN', note: 'Dominant WR1 target vacuum in Seattle with top-tier separation.' },
-      { rank: 6, posRank: 'RB3', name: 'Christian McCaffrey', team: 'SF', bye: 8, pos: 'RB', proj: 295, adp: 6.3, health: 'RISK', riskReason: 'Bilateral Achilles tendinitis & calf strain history; managing strict veteran practice load in SF.', note: 'Top overall per-game ceiling when active; managing soft-tissue maintenance.' },
-      { rank: 7, posRank: 'RB4', name: 'Jonathan Taylor', team: 'IND', bye: 13, pos: 'RB', proj: 290, adp: 7.2, health: 'CLEAN', note: 'Workhorse volume anchor behind physical Colts interior offensive line.' },
-      { rank: 8, posRank: 'WR4', name: 'Amon-Ra St. Brown', team: 'DET', bye: 6, pos: 'WR', proj: 292, adp: 8.1, health: 'CLEAN', note: 'PPR gold standard; commands relentless intermediate target volume across drives.' },
-      { rank: 9, posRank: 'WR5', name: 'CeeDee Lamb', team: 'DAL', bye: 14, pos: 'WR', proj: 288, adp: 9.2, health: 'CLEAN', note: 'Target vacuum in high-paced Dallas scheme with Pickens commanding perimeter coverage.' },
-      { rank: 10, posRank: 'WR6', name: 'Justin Jefferson', team: 'MIN', bye: 6, pos: 'WR', proj: 286, adp: 10.1, health: 'CLEAN', note: 'Premier perimeter target in Minnesota; primary vacuum for Kevin O\'Connell.' },
-      { rank: 11, posRank: 'RB5', name: "De'Von Achane", team: 'MIA', bye: 6, pos: 'RB', proj: 282, adp: 11.2, health: 'CLEAN', note: 'Unmatched explosive yards per touch; perimeter speed weapon in Miami.' },
-      { rank: 12, posRank: 'RB6', name: 'James Cook III', team: 'BUF', bye: 7, pos: 'RB', proj: 280, adp: 12.3, health: 'CLEAN', note: 'Expanded goal line work and dual-threat receiving role in Bills high-scoring attack.' },
-      { rank: 13, posRank: 'RB7', name: 'Jeremiyah Love', team: 'ARI', bye: 14, pos: 'RB', proj: 275, adp: 13.4, health: 'CLEAN', note: 'Ascending rookie starter with electric open-field elusiveness and receiving floor.' },
-      { rank: 14, posRank: 'WR7', name: 'Drake London', team: 'ATL', bye: 11, pos: 'WR', proj: 272, adp: 14.2, health: 'CLEAN', note: 'High contested-catch conversion rate and primary red zone target in Atlanta.' },
-      { rank: 15, posRank: 'RB8', name: 'Saquon Barkley', team: 'PHI', bye: 10, pos: 'RB', proj: 278, adp: 15.1, health: 'CLEAN', note: 'High-efficiency three-down workhorse behind physical Eagles front.' },
-      { rank: 16, posRank: 'RB9', name: 'Derrick Henry', team: 'BAL', bye: 13, pos: 'RB', proj: 270, adp: 16.2, health: 'CLEAN', note: 'Touchdown machine and fourth-quarter hammer in Lamar Jackson\'s ground game.' },
-      { rank: 17, posRank: 'RB10', name: 'Ashton Jeanty', team: 'LV', bye: 13, pos: 'RB', proj: 268, adp: 17.1, health: 'RISK', riskReason: 'Ramping up workload following preseason high-ankle tweak; full go for early season.', note: 'High-contact tackle breaker with three-down pass catching pedigree.' },
-      { rank: 18, posRank: 'RB11', name: 'Kenneth Walker III', team: 'KC', bye: 5, pos: 'RB', proj: 265, adp: 18.2, health: 'CLEAN', note: 'Dynamic explosive playmaker in Andy Reid\'s Kansas City backfield.' },
-      { rank: 19, posRank: 'RB12', name: 'Chase Brown', team: 'CIN', bye: 6, pos: 'RB', proj: 262, adp: 19.3, health: 'CLEAN', note: 'Lead pass-catching running back in explosive Bengals passing offense.' },
-      { rank: 20, posRank: 'TE1', name: 'Trey McBride', team: 'ARI', bye: 14, pos: 'TE', proj: 258, adp: 20.4, health: 'CLEAN', note: 'ESPN TE1. Heavy target sponge and middle-of-the-field anchor in Arizona.' },
-      { rank: 21, posRank: 'TE2', name: 'Brock Bowers', team: 'LV', bye: 13, pos: 'TE', proj: 255, adp: 21.2, health: 'CLEAN', note: 'Positional game-breaker; primary target across all downs in Raiders scheme.' },
-      { rank: 22, posRank: 'RB13', name: 'Omarion Hampton', team: 'LAC', bye: 7, pos: 'RB', proj: 254, adp: 22.1, health: 'CLEAN', note: 'Physical power runner anchoring Jim Harbaugh\'s run-first Chargers ground game.' },
-      { rank: 23, posRank: 'RB14', name: 'Breece Hall', team: 'NYJ', bye: 13, pos: 'RB', proj: 250, adp: 23.3, health: 'CLEAN', note: 'Versatile workhorse runner with high-end pass catching skillset.' },
-      { rank: 24, posRank: 'WR8', name: 'Rashee Rice', team: 'KC', bye: 5, pos: 'WR', proj: 252, adp: 24.2, health: 'CLEAN', note: 'Intermediate middle-of-field target vacuum for Patrick Mahomes in KC.' },
-      { rank: 25, posRank: 'WR9', name: 'Nico Collins', team: 'HOU', bye: 8, pos: 'WR', proj: 250, adp: 25.1, health: 'CLEAN', note: 'Dominant perimeter alpha with league-leading yards-per-route run in Texans attack.' },
-      { rank: 26, posRank: 'WR10', name: 'A.J. Brown', team: 'NE', bye: 11, pos: 'WR', proj: 248, adp: 26.2, health: 'CLEAN', note: 'Alpha boundary target with elite physical yards after catch in New England.' },
-      { rank: 27, posRank: 'WR11', name: 'Chris Olave', team: 'NO', bye: 8, pos: 'WR', proj: 246, adp: 27.3, health: 'CLEAN', note: 'Refined route technician commanding deep target funnel in New Orleans.' },
-      { rank: 28, posRank: 'WR12', name: 'Malik Nabers', team: 'NYG', bye: 8, pos: 'WR', proj: 245, adp: 28.1, health: 'CLEAN', note: 'Explosive after catch; commands heavy 30%+ team target share in NY.' },
-      { rank: 29, posRank: 'WR13', name: 'Garrett Wilson', team: 'NYJ', bye: 13, pos: 'WR', proj: 242, adp: 29.2, health: 'CLEAN', note: 'Elite change-of-direction playmaker and red zone receiver for Jets.' },
-      { rank: 30, posRank: 'RB15', name: 'Josh Jacobs', team: 'GB', bye: 11, pos: 'RB', proj: 240, adp: 30.1, health: 'CLEAN', note: 'Physical between-the-tackles bellcow in Green Bay system.' },
-      { rank: 31, posRank: 'WR14', name: 'George Pickens', team: 'DAL', bye: 14, pos: 'WR', proj: 238, adp: 31.2, health: 'CLEAN', note: 'Spectacular contested-catch downfield weapon opposite Lamb in Dallas.' },
-      { rank: 32, posRank: 'RB16', name: 'Javonte Williams', team: 'DAL', bye: 14, pos: 'RB', proj: 235, adp: 32.1, health: 'CLEAN', note: 'Physical inside runner earning primary backfield touches for Cowboys.' },
-      { rank: 33, posRank: 'WR15', name: 'Tetairoa McMillan', team: 'CAR', bye: 5, pos: 'WR', proj: 234, adp: 33.2, health: 'CLEAN', note: 'Towering rookie alpha boundary weapon in Carolina.' },
-      { rank: 34, posRank: 'WR16', name: 'Zay Flowers', team: 'BAL', bye: 13, pos: 'WR', proj: 232, adp: 34.1, health: 'CLEAN', note: 'Explosive slot and perimeter weapon for Lamar Jackson in Baltimore.' },
-      { rank: 35, posRank: 'WR17', name: 'DeVonta Smith', team: 'PHI', bye: 10, pos: 'WR', proj: 230, adp: 35.2, health: 'CLEAN', note: 'Silky smooth separator and high-leverage target converter.' },
-      { rank: 36, posRank: 'QB1', name: 'Josh Allen', team: 'BUF', bye: 7, pos: 'QB', proj: 388, adp: 36.1, health: 'CLEAN', note: 'ESPN QB1. Elite overall ceiling with heavy designed goal line rushes for Bills.' },
-      { rank: 37, posRank: 'RB17', name: 'Travis Etienne Jr.', team: 'NO', bye: 8, pos: 'RB', proj: 228, adp: 37.2, health: 'CLEAN', note: 'Three-down burst back in New Orleans backfield.' },
-      { rank: 38, posRank: 'RB18', name: 'Kyren Williams', team: 'LAR', bye: 11, pos: 'RB', proj: 226, adp: 38.3, health: 'CLEAN', note: 'High red-zone snap percentage when active in Rams zone scheme.' },
-      { rank: 39, posRank: 'RB19', name: 'Quinshon Judkins', team: 'CLE', bye: 11, pos: 'RB', proj: 225, adp: 39.1, health: 'CLEAN', note: 'Physical rookie power runner carving out starting touches in Cleveland.' },
-      { rank: 40, posRank: 'RB20', name: 'Cam Skattebo', team: 'NYG', bye: 8, pos: 'RB', proj: 222, adp: 40.2, health: 'CLEAN', note: 'Hard-nosed rookie back with downhill physicality in NY.' },
-
-      // --- RANKINGS 41 - 80 ---
-      { rank: 41, posRank: 'RB21', name: 'Bucky Irving', team: 'TB', bye: 10, pos: 'RB', proj: 220, adp: 41.3, health: 'CLEAN', note: 'Elusive space back with expanding touch share in Tampa Bay.' },
-      { rank: 42, posRank: 'WR18', name: 'Emeka Egbuka', team: 'TB', bye: 10, pos: 'WR', proj: 218, adp: 42.1, health: 'CLEAN', note: 'Precise route technician stepping into primary slot duties.' },
-      { rank: 43, posRank: 'WR19', name: 'Davante Adams', team: 'LAR', bye: 11, pos: 'WR', proj: 216, adp: 43.2, health: 'CLEAN', note: 'Master route technician in McVay offense.' },
-      { rank: 44, posRank: 'WR20', name: 'Ladd McConkey', team: 'LAC', bye: 7, pos: 'WR', proj: 214, adp: 44.1, health: 'CLEAN', note: 'Herbert favorite third-down separator on perimeter.' },
-      { rank: 45, posRank: 'WR21', name: 'Terry McLaurin', team: 'WAS', bye: 7, pos: 'WR', proj: 212, adp: 45.2, health: 'CLEAN', note: 'Dependable chain mover and deep-ball specialist for Daniels.' },
-      { rank: 46, posRank: 'WR22', name: 'Tee Higgins', team: 'CIN', bye: 6, pos: 'WR', proj: 210, adp: 46.1, health: 'CLEAN', note: 'Alpha boundary weapon opposite Chase in Cincinnati.' },
-      { rank: 47, posRank: 'WR23', name: 'Jaylen Waddle', team: 'DEN', bye: 10, pos: 'WR', proj: 208, adp: 47.2, health: 'CLEAN', note: 'Speed burner commanding deep targets in Denver.' },
-      { rank: 48, posRank: 'WR24', name: 'Rome Odunze', team: 'CHI', bye: 10, pos: 'WR', proj: 206, adp: 48.1, health: 'CLEAN', note: 'High-pedigree outside receiver in ascending Bears attack.' },
-      { rank: 49, posRank: 'TE3', name: 'Colston Loveland', team: 'CHI', bye: 10, pos: 'TE', proj: 204, adp: 49.2, health: 'CLEAN', note: 'Rookie seam-stretcher and matchup nightmare in Chicago.' },
-      { rank: 50, posRank: 'TE4', name: 'Tyler Warren', team: 'IND', bye: 13, pos: 'TE', proj: 202, adp: 50.1, health: 'CLEAN', note: 'Dynamic dual-threat tight end in Colts offensive attack.' },
-      { rank: 51, posRank: 'WR25', name: 'Jameson Williams', team: 'DET', bye: 6, pos: 'WR', proj: 200, adp: 51.2, health: 'CLEAN', note: 'Game-breaking speed on crossers and vertical routes.' },
-      { rank: 52, posRank: 'WR26', name: 'DJ Moore', team: 'BUF', bye: 7, pos: 'WR', proj: 198, adp: 52.1, health: 'CLEAN', note: 'YAC powerhouse stepping into primary target role with Allen.' },
-      { rank: 53, posRank: 'WR27', name: 'Luther Burden III', team: 'CHI', bye: 10, pos: 'WR', proj: 196, adp: 53.2, health: 'CLEAN', note: 'Dynamic slot separator and YAC creator for Bears.' },
-      { rank: 54, posRank: 'WR28', name: 'Carnell Tate', team: 'TEN', bye: 9, pos: 'WR', proj: 194, adp: 54.1, health: 'CLEAN', note: 'Ascending rookie wideout in Tennessee.' },
-      { rank: 55, posRank: 'QB2', name: 'Jayden Daniels', team: 'WAS', bye: 7, pos: 'QB', proj: 360, adp: 55.2, health: 'CLEAN', note: 'Konami code rushing QB ceiling with Kliff Kingsbury in Washington.' },
-      { rank: 56, posRank: 'QB3', name: 'Lamar Jackson', team: 'BAL', bye: 13, pos: 'QB', proj: 375, adp: 56.1, health: 'CLEAN', note: 'Dual-threat MVP upside with safe weekly rushing baseline in Baltimore.' },
-      { rank: 57, posRank: 'QB4', name: 'Drake Maye', team: 'NE', bye: 11, pos: 'QB', proj: 350, adp: 57.2, health: 'CLEAN', note: 'Dual-threat breakout leader in New England with A.J. Brown.' },
-      { rank: 58, posRank: 'QB5', name: 'Jalen Hurts', team: 'PHI', bye: 10, pos: 'QB', proj: 355, adp: 58.1, health: 'CLEAN', note: 'Tush-push rushing touchdown engine with Saquon in Philly.' },
-      { rank: 59, posRank: 'RB22', name: "D'Andre Swift", team: 'CHI', bye: 10, pos: 'RB', proj: 192, adp: 59.2, health: 'CLEAN', note: 'Pass-catching staple with expanded touches in Chicago.' },
-      { rank: 60, posRank: 'RB23', name: 'Bhayshul Tuten', team: 'JAC', bye: 7, pos: 'RB', proj: 190, adp: 60.1, health: 'CLEAN', note: 'Rookie burst runner carving touches in Jacksonville.' },
-      { rank: 61, posRank: 'RB24', name: 'David Montgomery', team: 'HOU', bye: 8, pos: 'RB', proj: 188, adp: 61.2, health: 'CLEAN', note: 'Tough red-zone finisher in Houston.' },
-      { rank: 62, posRank: 'RB25', name: 'Jadarian Price', team: 'SEA', bye: 11, pos: 'RB', proj: 186, adp: 62.1, health: 'CLEAN', note: 'Dynamic young back in Seattle.' },
-      { rank: 63, posRank: 'RB26', name: 'Rhamondre Stevenson', team: 'NE', bye: 11, pos: 'RB', proj: 185, adp: 63.2, health: 'CLEAN', note: 'Workhorse interior grinder in New England.' },
-      { rank: 64, posRank: 'RB27', name: 'Jaylen Warren', team: 'PIT', bye: 9, pos: 'RB', proj: 184, adp: 64.1, health: 'CLEAN', note: 'High-efficiency pass-catching specialist in Pittsburgh.' },
-      { rank: 65, posRank: 'WR29', name: 'Courtland Sutton', team: 'DEN', bye: 10, pos: 'WR', proj: 182, adp: 65.2, health: 'CLEAN', note: 'End-zone jump ball specialist in Denver.' },
-      { rank: 66, posRank: 'WR30', name: 'Michael Pittman Jr.', team: 'PIT', bye: 9, pos: 'WR', proj: 180, adp: 66.1, health: 'CLEAN', note: 'High-volume possession target.' },
-      { rank: 67, posRank: 'WR31', name: 'Marvin Harrison Jr.', team: 'ARI', bye: 14, pos: 'WR', proj: 178, adp: 67.2, health: 'CLEAN', note: 'Alpha perimeter receiver with big-play upside in Arizona.' },
-      { rank: 68, posRank: 'WR32', name: 'DK Metcalf', team: 'PIT', bye: 9, pos: 'WR', proj: 176, adp: 68.1, health: 'CLEAN', note: 'Physical deep-threat receiver in Pittsburgh.' },
-      { rank: 69, posRank: 'WR33', name: 'Parker Washington', team: 'JAC', bye: 7, pos: 'WR', proj: 174, adp: 69.2, health: 'CLEAN', note: 'Ascending slot weapon for Jaguars.' },
-      { rank: 70, posRank: 'WR34', name: 'Alec Pierce', team: 'IND', bye: 13, pos: 'WR', proj: 172, adp: 70.1, health: 'CLEAN', note: 'Vertical lid-lifter for Colts offense.' },
-      { rank: 71, posRank: 'TE5', name: 'Kyle Pitts Sr.', team: 'ATL', bye: 11, pos: 'TE', proj: 170, adp: 71.2, health: 'CLEAN', note: 'Generational athletic profile in Atlanta.' },
-      { rank: 72, posRank: 'TE6', name: 'Harold Fannin Jr.', team: 'CLE', bye: 11, pos: 'TE', proj: 168, adp: 72.1, health: 'CLEAN', note: 'Rookie pass-catching tight end in Cleveland.' },
-      { rank: 73, posRank: 'TE7', name: 'Sam LaPorta', team: 'DET', bye: 6, pos: 'TE', proj: 166, adp: 73.2, health: 'CLEAN', note: 'Proven red-zone target in Lions offense.' },
-      { rank: 74, posRank: 'QB6', name: 'Joe Burrow', team: 'CIN', bye: 6, pos: 'QB', proj: 338, adp: 74.1, health: 'CLEAN', note: 'Elite pocket passer with Chase and Higgins.' },
-      { rank: 75, posRank: 'QB7', name: 'Jaxson Dart', team: 'NYG', bye: 8, pos: 'QB', proj: 320, adp: 75.2, health: 'CLEAN', note: 'Rookie dual-threat signal caller in New York.' },
-      { rank: 76, posRank: 'WR35', name: 'Christian Watson', team: 'GB', bye: 11, pos: 'WR', proj: 165, adp: 76.1, health: 'CLEAN', note: 'Touchdown magnet with red zone size in Green Bay.' },
-      { rank: 77, posRank: 'WR36', name: 'Mike Evans', team: 'SF', bye: 8, pos: 'WR', proj: 164, adp: 77.2, health: 'RISK', riskReason: 'Recurrent hamstring tightness & 30+ veteran load management; elevated re-injury risk under heavy sprint load.', note: 'Veteran red zone weapon; managing soft-tissue precautions in SF.' },
-      { rank: 78, posRank: 'WR37', name: 'Matthew Golden', team: 'GB', bye: 11, pos: 'WR', proj: 162, adp: 78.1, health: 'CLEAN', note: 'Rookie speed threat for Packers.' },
-      { rank: 79, posRank: 'WR38', name: 'Brian Thomas Jr.', team: 'JAC', bye: 7, pos: 'WR', proj: 160, adp: 79.2, health: 'CLEAN', note: 'Elite deep threat and WR1 for Lawrence in Jacksonville.' },
-      { rank: 80, posRank: 'WR39', name: 'Michael Wilson', team: 'ARI', bye: 14, pos: 'WR', proj: 158, adp: 80.1, health: 'CLEAN', note: 'Physical boundary target in Arizona.' },
-
-      // --- RANKINGS 81 - 120 ---
-      { rank: 81, posRank: 'WR40', name: 'Jakobi Meyers', team: 'JAC', bye: 7, pos: 'WR', proj: 156, adp: 81.2, health: 'CLEAN', note: 'Intermediate reception converter in Jacksonville.' },
-      { rank: 82, posRank: 'QB8', name: 'Trevor Lawrence', team: 'JAC', bye: 7, pos: 'QB', proj: 315, adp: 82.1, health: 'CLEAN', note: 'Solid QB floor with upgraded target weapons.' },
-      { rank: 83, posRank: 'QB9', name: 'Dak Prescott', team: 'DAL', bye: 14, pos: 'QB', proj: 318, adp: 83.2, health: 'CLEAN', note: 'Pass-heavy script leader with CeeDee Lamb.' },
-      { rank: 84, posRank: 'QB10', name: 'Bo Nix', team: 'DEN', bye: 10, pos: 'QB', proj: 305, adp: 84.1, health: 'CLEAN', note: 'High completion percentage and scramble floor in Denver.' },
-      { rank: 85, posRank: 'QB11', name: 'Brock Purdy', team: 'SF', bye: 8, pos: 'QB', proj: 308, adp: 85.2, health: 'CLEAN', note: 'Elite Shanahan offensive efficiency distributor.' },
-      { rank: 86, posRank: 'QB12', name: 'Matthew Stafford', team: 'LAR', bye: 11, pos: 'QB', proj: 285, adp: 86.1, health: 'CLEAN', note: 'Veteran master in McVay passing offense with Nacua/Adams.' },
-      { rank: 87, posRank: 'QB13', name: 'Caleb Williams', team: 'CHI', bye: 10, pos: 'QB', proj: 312, adp: 87.2, health: 'CLEAN', note: 'Loaded offensive supporting cast in Chicago.' },
-      { rank: 88, posRank: 'WR41', name: "Wan'Dale Robinson", team: 'TEN', bye: 9, pos: 'WR', proj: 154, adp: 88.1, health: 'CLEAN', note: 'PPR short-area slot target in Tennessee.' },
-      { rank: 89, posRank: 'WR42', name: 'Jordan Addison', team: 'MIN', bye: 6, pos: 'WR', proj: 152, adp: 89.2, health: 'CLEAN', note: 'Premier route separator opposite Jefferson in Minnesota.' },
-      { rank: 90, posRank: 'WR43', name: "De'Zhaun Stribling", team: 'SF', bye: 8, pos: 'WR', proj: 150, adp: 90.1, health: 'CLEAN', note: 'Rookie boundary receiver for 49ers.' },
-      { rank: 91, posRank: 'WR44', name: 'Khalil Shakir', team: 'BUF', bye: 7, pos: 'WR', proj: 148, adp: 91.2, health: 'CLEAN', note: 'High-efficiency slot YAC runner for Josh Allen.' },
-      { rank: 92, posRank: 'WR45', name: 'Jayden Reed', team: 'GB', bye: 11, pos: 'WR', proj: 146, adp: 92.1, health: 'CLEAN', note: 'Versatile gadget and slot runner in Green Bay.' },
-      { rank: 93, posRank: 'QB14', name: 'Justin Herbert', team: 'LAC', bye: 7, pos: 'QB', proj: 302, adp: 93.2, health: 'CLEAN', note: 'Arm talent leader in disciplined Chargers offense.' },
-      { rank: 94, posRank: 'QB15', name: 'Patrick Mahomes', team: 'KC', bye: 5, pos: 'QB', proj: 340, adp: 94.1, health: 'CLEAN', note: 'Consistently top-tier passing floor with Rice and Reid.' },
-      { rank: 95, posRank: 'RB28', name: 'Rico Dowdle', team: 'PIT', bye: 9, pos: 'RB', proj: 145, adp: 95.2, health: 'CLEAN', note: 'Rotational power runner in Pittsburgh.' },
-      { rank: 96, posRank: 'RB29', name: 'Jonathon Brooks', team: 'CAR', bye: 5, pos: 'RB', proj: 144, adp: 96.1, health: 'RISK', riskReason: 'Post-ACL surgical return and soft-tissue ramp-up period.', note: 'Explosive runner in Carolina backfield.' },
-      { rank: 97, posRank: 'RB30', name: 'TreVeyon Henderson', team: 'NE', bye: 11, pos: 'RB', proj: 142, adp: 97.2, health: 'CLEAN', note: 'Explosive rookie receiving back in New England.' },
-      { rank: 98, posRank: 'RB31', name: 'Tony Pollard', team: 'TEN', bye: 9, pos: 'RB', proj: 140, adp: 98.1, health: 'CLEAN', note: 'Speed back sharing backfield touches in Tennessee.' },
-      { rank: 99, posRank: 'RB32', name: 'Kenny Gainwell', team: 'TB', bye: 10, pos: 'RB', proj: 138, adp: 99.2, health: 'CLEAN', note: 'Change of pace and pass catching back in Tampa.' },
-      { rank: 100, posRank: 'RB33', name: 'Chuba Hubbard', team: 'CAR', bye: 5, pos: 'RB', proj: 136, adp: 100.1, health: 'CLEAN', note: 'Proven volume runner in Carolina.' },
-      { rank: 101, posRank: 'TE8', name: 'George Kittle', team: 'SF', bye: 8, pos: 'TE', proj: 145, adp: 101.2, health: 'RISK', riskReason: 'Late-stage Achilles tendon rehab and core muscle soreness; managing reps.', note: 'Elite tight end talent managing veteran rehabilitation in SF.' },
-      { rank: 102, posRank: 'TE9', name: 'Tucker Kraft', team: 'GB', bye: 11, pos: 'TE', proj: 142, adp: 102.1, health: 'CLEAN', note: 'Athletic YAC tight end in Green Bay offense.' },
-      { rank: 103, posRank: 'TE10', name: 'Dallas Goedert', team: 'PHI', bye: 10, pos: 'TE', proj: 140, adp: 103.2, health: 'CLEAN', note: 'Physical seam-stretcher and blocker for Eagles.' },
-      { rank: 104, posRank: 'TE11', name: 'Travis Kelce', team: 'KC', bye: 5, pos: 'TE', proj: 138, adp: 104.1, health: 'CLEAN', note: 'Veteran red-zone weapon for Mahomes in Kansas City.' },
-      { rank: 105, posRank: 'RB34', name: 'J.K. Dobbins', team: 'DEN', bye: 10, pos: 'RB', proj: 135, adp: 105.2, health: 'CLEAN', note: 'Efficient between-tackles runner in Payton scheme.' },
-      { rank: 106, posRank: 'RB35', name: 'Kyle Monangai', team: 'CHI', bye: 10, pos: 'RB', proj: 134, adp: 106.1, health: 'CLEAN', note: 'Rookie physical inside grinder for Bears.' },
-      { rank: 107, posRank: 'RB36', name: 'Jacory Croskey-Merritt', team: 'WAS', bye: 7, pos: 'RB', proj: 132, adp: 107.2, health: 'CLEAN', note: 'Rookie runner in Kingsbury backfield.' },
-      { rank: 108, posRank: 'RB37', name: 'Aaron Jones Sr.', team: 'MIN', bye: 6, pos: 'RB', proj: 130, adp: 108.1, health: 'CLEAN', note: 'Veteran pass-catching back in Minnesota.' },
-      { rank: 109, posRank: 'TE12', name: 'Jake Ferguson', team: 'DAL', bye: 14, pos: 'TE', proj: 136, adp: 109.2, health: 'CLEAN', note: 'Safety valve for Dak Prescott in Dallas.' },
-      { rank: 110, posRank: 'TE13', name: 'Mark Andrews', team: 'BAL', bye: 13, pos: 'TE', proj: 135, adp: 110.1, health: 'CLEAN', note: 'Proven red zone monster for Lamar in Baltimore.' },
-      { rank: 111, posRank: 'TE14', name: 'Isaiah Likely', team: 'NYG', bye: 8, pos: 'TE', proj: 134, adp: 111.2, health: 'CLEAN', note: 'Dynamic athletic receiving weapon in New York.' },
-      { rank: 112, posRank: 'WR46', name: 'Xavier Worthy', team: 'KC', bye: 5, pos: 'WR', proj: 135, adp: 112.1, health: 'CLEAN', note: 'World-class speed threat stretching opposing secondaries in KC.' },
-      { rank: 113, posRank: 'WR47', name: 'Quentin Johnston', team: 'LAC', bye: 7, pos: 'WR', proj: 132, adp: 113.2, health: 'CLEAN', note: 'Perimeter big-bodied target in Chargers attack.' },
-      { rank: 114, posRank: 'WR48', name: 'Stefon Diggs', team: 'WAS', bye: 7, pos: 'WR', proj: 130, adp: 114.1, health: 'CLEAN', note: 'Veteran route specialist in Washington.' },
-      { rank: 115, posRank: 'RB38', name: 'Rachaad White', team: 'WAS', bye: 7, pos: 'RB', proj: 128, adp: 115.2, health: 'CLEAN', note: 'High reception floor in passing situations.' },
-      { rank: 116, posRank: 'TE15', name: 'Dalton Kincaid', team: 'BUF', bye: 7, pos: 'TE', proj: 132, adp: 116.1, health: 'CLEAN', note: 'High-volume slot receiver masquerading as TE.' },
-      { rank: 117, posRank: 'TE16', name: 'T.J. Hockenson', team: 'MIN', bye: 6, pos: 'TE', proj: 130, adp: 117.2, health: 'RISK', riskReason: 'Snap ramp-up management following multi-ligament knee surgical repair.', note: 'Target magnet in Minnesota passing attack.' },
-      { rank: 118, posRank: 'TE17', name: 'Hunter Henry', team: 'NE', bye: 11, pos: 'TE', proj: 128, adp: 118.1, health: 'CLEAN', note: 'Veteran red zone weapon for Maye in New England.' },
-      { rank: 119, posRank: 'TE18', name: 'Terrance Ferguson', team: 'LAR', bye: 11, pos: 'TE', proj: 126, adp: 119.2, health: 'CLEAN', note: 'Rookie seam stretcher for Rams.' },
-      { rank: 120, posRank: 'RB39', name: 'Jordan Mason', team: 'MIN', bye: 6, pos: 'RB', proj: 125, adp: 120.1, health: 'CLEAN', note: 'Physical downhill runner in Minnesota.' },
-
-      // --- RANKINGS 121 - 160 ---
-      { rank: 121, posRank: 'RB40', name: 'Blake Corum', team: 'LAR', bye: 11, pos: 'RB', proj: 124, adp: 121.2, health: 'CLEAN', note: 'Premier contingency bellcow behind Kyren in LA.' },
-      { rank: 122, posRank: 'RB41', name: 'RJ Harvey', team: 'DEN', bye: 10, pos: 'RB', proj: 122, adp: 122.1, health: 'CLEAN', note: 'Explosive rookie back in Denver offense.' },
-      { rank: 123, posRank: 'RB42', name: 'Woody Marks', team: 'HOU', bye: 8, pos: 'RB', proj: 120, adp: 123.2, health: 'CLEAN', note: 'Pass catching rookie back in Houston.' },
-      { rank: 124, posRank: 'WR49', name: 'Josh Downs', team: 'IND', bye: 13, pos: 'WR', proj: 125, adp: 124.1, health: 'CLEAN', note: 'Electric slot creator for Colts.' },
-      { rank: 125, posRank: 'WR50', name: 'KC Concepcion', team: 'CLE', bye: 11, pos: 'WR', proj: 122, adp: 125.2, health: 'CLEAN', note: 'Dynamic rookie playmaker in Cleveland.' },
-      { rank: 126, posRank: 'WR51', name: 'Makai Lemon', team: 'PHI', bye: 10, pos: 'WR', proj: 120, adp: 126.1, health: 'CLEAN', note: 'Rookie receiver in Philadelphia.' },
-      { rank: 127, posRank: 'WR52', name: 'Chris Godwin Jr.', team: 'TB', bye: 10, pos: 'WR', proj: 118, adp: 127.2, health: 'CLEAN', note: 'Slot chain mover in Tampa Bay.' },
-      { rank: 128, posRank: 'WR53', name: 'Deebo Samuel Sr.', team: 'SF', bye: 8, pos: 'WR', proj: 116, adp: 128.1, health: 'CLEAN', note: 'Dual-threat physical weapon for 49ers.' },
-      { rank: 129, posRank: 'WR54', name: 'Romeo Doubs', team: 'NE', bye: 11, pos: 'WR', proj: 115, adp: 129.2, health: 'CLEAN', note: 'Perimeter possession target in New England.' },
-      { rank: 130, posRank: 'WR55', name: 'Jalen Coker', team: 'CAR', bye: 5, pos: 'WR', proj: 114, adp: 130.1, health: 'CLEAN', note: 'Underrated slot technician in Carolina.' },
-      { rank: 131, posRank: 'WR56', name: 'Rashid Shaheed', team: 'SEA', bye: 11, pos: 'WR', proj: 112, adp: 131.2, health: 'CLEAN', note: 'All-Pro returner and deep-shot specialist in Seattle.' },
-      { rank: 132, posRank: 'WR57', name: 'Jalen McMillan', team: 'TB', bye: 10, pos: 'WR', proj: 110, adp: 132.1, health: 'CLEAN', note: 'Precise route technician in Tampa.' },
-      { rank: 133, posRank: 'QB16', name: 'Kyler Murray', team: 'MIN', bye: 6, pos: 'QB', proj: 295, adp: 133.2, health: 'CLEAN', note: 'High rushing floor and dual-threat late QB value in Minnesota.' },
-      { rank: 134, posRank: 'QB17', name: 'Tyler Shough', team: 'NO', bye: 8, pos: 'QB', proj: 260, adp: 134.1, health: 'CLEAN', note: 'Strong-armed quarterback in New Orleans.' },
-      { rank: 135, posRank: 'QB18', name: 'Jared Goff', team: 'DET', bye: 6, pos: 'QB', proj: 275, adp: 135.2, health: 'CLEAN', note: 'High passing efficiency distributor in Detroit.' },
-      { rank: 136, posRank: 'QB19', name: 'Daniel Jones', team: 'IND', bye: 13, pos: 'QB', proj: 265, adp: 136.1, health: 'CLEAN', note: 'Dual-threat quarterback in Indianapolis.' },
-      { rank: 137, posRank: 'RB43', name: 'Zach Charbonnet', team: 'SEA', bye: 11, pos: 'RB', proj: 118, adp: 137.2, health: 'CLEAN', note: 'High-end contingency handcuff in Seattle.' },
-      { rank: 138, posRank: 'RB44', name: 'Tyjae Spears', team: 'TEN', bye: 9, pos: 'RB', proj: 116, adp: 138.1, health: 'CLEAN', note: 'High-efficiency change-of-pace runner with 3-down burst.' },
-      { rank: 139, posRank: 'RB45', name: 'Chris Rodriguez Jr.', team: 'JAC', bye: 7, pos: 'RB', proj: 114, adp: 139.2, health: 'CLEAN', note: 'Downhill interior runner in Jacksonville.' },
-      { rank: 140, posRank: 'RB46', name: 'Brian Robinson Jr.', team: 'ATL', bye: 11, pos: 'RB', proj: 112, adp: 140.1, health: 'CLEAN', note: 'Power running back in Atlanta.' },
-      { rank: 141, posRank: 'RB47', name: 'Tyler Allgeier', team: 'ARI', bye: 14, pos: 'RB', proj: 110, adp: 141.2, health: 'CLEAN', note: 'Direct goal-line backup in Arizona.' },
-      { rank: 142, posRank: 'RB48', name: 'MarShawn Lloyd', team: 'GB', bye: 11, pos: 'RB', proj: 108, adp: 142.1, health: 'CLEAN', note: 'Explosive runner in Green Bay backfield.' },
-      { rank: 143, posRank: 'WR58', name: 'Denzel Boston', team: 'CLE', bye: 11, pos: 'WR', proj: 108, adp: 143.2, health: 'CLEAN', note: 'Rookie boundary receiver in Cleveland.' },
-      { rank: 144, posRank: 'WR59', name: 'Jerry Jeudy', team: 'CLE', bye: 11, pos: 'WR', proj: 106, adp: 144.1, health: 'CLEAN', note: 'Route technician on perimeter.' },
-      { rank: 145, posRank: 'WR60', name: 'Calvin Ridley', team: 'TEN', bye: 9, pos: 'WR', proj: 105, adp: 145.2, health: 'CLEAN', note: 'Boundary deep target in Tennessee.' },
-      { rank: 146, posRank: 'WR61', name: 'Adonai Mitchell', team: 'NYJ', bye: 13, pos: 'WR', proj: 104, adp: 146.1, health: 'CLEAN', note: 'Explosive vertical boundary threat in New York.' },
-      { rank: 147, posRank: 'WR62', name: 'Travis Hunter', team: 'JAC', bye: 7, pos: 'WR', proj: 102, adp: 147.2, health: 'CLEAN', note: 'Two-way rookie sensation in Jacksonville.' },
-      { rank: 148, posRank: 'WR63', name: 'Caleb Douglas', team: 'MIA', bye: 6, pos: 'WR', proj: 100, adp: 148.1, health: 'CLEAN', note: 'Speed weapon in Miami.' },
-      { rank: 149, posRank: 'QB20', name: 'Baker Mayfield', team: 'TB', bye: 10, pos: 'QB', proj: 270, adp: 149.2, health: 'CLEAN', note: 'Gritty starter with strong downfield passing in Tampa.' },
-      { rank: 150, posRank: 'QB21', name: 'Malik Willis', team: 'MIA', bye: 6, pos: 'QB', proj: 250, adp: 150.1, health: 'CLEAN', note: 'Dual-threat quarterback in Miami.' },
-      { rank: 151, posRank: 'WR64', name: 'Jordyn Tyson', team: 'NO', bye: 8, pos: 'WR', proj: 98, adp: 151.2, health: 'OUT/PUP', riskReason: 'Hamstring surgery recovery; on Reserve/PUP list.', note: 'High-upside boundary receiver on PUP.' },
-      { rank: 152, posRank: 'WR65', name: 'Tre Tucker', team: 'LV', bye: 13, pos: 'WR', proj: 96, adp: 152.1, health: 'CLEAN', note: 'Blazing speed slot runner for Raiders.' },
-      { rank: 153, posRank: 'WR66', name: 'Jalen Nailor', team: 'LV', bye: 13, pos: 'WR', proj: 95, adp: 153.2, health: 'CLEAN', note: 'Speedy WR in Las Vegas.' },
-      { rank: 154, posRank: 'RB49', name: 'Keaton Mitchell', team: 'LAC', bye: 7, pos: 'RB', proj: 105, adp: 154.1, health: 'CLEAN', note: 'Breakaway speed weapon for Chargers.' },
-      { rank: 155, posRank: 'RB50', name: 'Isiah Pacheco', team: 'DET', bye: 6, pos: 'RB', proj: 104, adp: 155.2, health: 'CLEAN', note: 'Downhill physical runner in Detroit.' },
-      { rank: 156, posRank: 'RB51', name: 'Jonah Coleman', team: 'DEN', bye: 10, pos: 'RB', proj: 102, adp: 156.1, health: 'CLEAN', note: 'Rookie physical runner in Denver.' },
-      { rank: 157, posRank: 'RB52', name: 'Mike Washington Jr.', team: 'LV', bye: 13, pos: 'RB', proj: 100, adp: 157.2, health: 'CLEAN', note: 'Rookie back in Las Vegas.' },
-      { rank: 158, posRank: 'RB53', name: 'Braelon Allen', team: 'NYJ', bye: 13, pos: 'RB', proj: 98, adp: 158.1, health: 'CLEAN', note: 'Massive physical hammer behind Breece Hall.' },
-      { rank: 159, posRank: 'TE19', name: 'Kenyon Sadiq', team: 'NYJ', bye: 13, pos: 'TE', proj: 105, adp: 159.2, health: 'CLEAN', note: 'Rookie tight end in New York.' },
-      { rank: 160, posRank: 'TE20', name: 'Juwan Johnson', team: 'NO', bye: 8, pos: 'TE', proj: 104, adp: 160.1, health: 'CLEAN', note: 'Converted wideout red zone threat in New Orleans.' },
-
-      // --- RANKINGS 161 - 200 (Includes Defense & Kicker Tier 1) ---
-      { rank: 161, posRank: 'WR67', name: 'Keenan Allen', team: 'IND', bye: 13, pos: 'WR', proj: 95, adp: 161.2, health: 'CLEAN', note: 'Veteran master slot separator and chain mover.' },
-      { rank: 162, posRank: 'WR68', name: 'Rashod Bateman', team: 'BAL', bye: 13, pos: 'WR', proj: 94, adp: 162.1, health: 'CLEAN', note: 'Downfield boundary threat in Baltimore.' },
-      { rank: 163, posRank: 'WR69', name: 'Dontayvion Wicks', team: 'PHI', bye: 10, pos: 'WR', proj: 92, adp: 163.2, health: 'CLEAN', note: 'High-efficiency route separator in Philadelphia.' },
-      { rank: 164, posRank: 'WR70', name: 'Devaughn Vele', team: 'NO', bye: 8, pos: 'WR', proj: 90, adp: 164.1, health: 'CLEAN', note: 'Big-bodied possession target.' },
-      { rank: 165, posRank: 'WR71', name: 'Jaylin Noel', team: 'HOU', bye: 8, pos: 'WR', proj: 88, adp: 165.2, health: 'CLEAN', note: 'Rookie slot playmaker in Houston.' },
-      { rank: 166, posRank: 'RB54', name: 'Tank Bigsby', team: 'PHI', bye: 10, pos: 'RB', proj: 96, adp: 166.1, health: 'CLEAN', note: 'Inside runner with power in Philadelphia.' },
-      { rank: 167, posRank: 'RB55', name: 'Ray Davis', team: 'BUF', bye: 7, pos: 'RB', proj: 95, adp: 167.2, health: 'CLEAN', note: 'Physical goal-line complement to James Cook in Buffalo.' },
-      { rank: 168, posRank: 'RB56', name: 'Dylan Sampson', team: 'CLE', bye: 11, pos: 'RB', proj: 94, adp: 168.1, health: 'CLEAN', note: 'Rookie runner in Cleveland backfield.' },
-      
-      // Top ESPN Defenses
-      { rank: 169, posRank: 'DST1', name: 'Texans D/ST', team: 'HOU', bye: 8, pos: 'DST', proj: 125, adp: 169.2, health: 'CLEAN', note: 'ESPN DST1. Demeco Ryans pass rush and turnover defense.' },
-      { rank: 170, posRank: 'DST2', name: 'Broncos D/ST', team: 'DEN', bye: 10, pos: 'DST', proj: 122, adp: 170.1, health: 'CLEAN', note: 'Vance Joseph aggressive blitzing front in Denver.' },
-      { rank: 171, posRank: 'DST3', name: 'Steelers D/ST', team: 'PIT', bye: 9, pos: 'DST', proj: 120, adp: 171.2, health: 'CLEAN', note: 'TJ Watt elite sack floor and defensive scoring.' },
-      { rank: 172, posRank: 'DST4', name: 'Seahawks D/ST', team: 'SEA', bye: 11, pos: 'DST', proj: 118, adp: 172.1, health: 'CLEAN', note: 'Mike Macdonald disciplined defensive scheme.' },
-      { rank: 173, posRank: 'DST5', name: 'Rams D/ST', team: 'LAR', bye: 11, pos: 'DST', proj: 116, adp: 173.2, health: 'CLEAN', note: 'Young explosive defensive front in LA.' },
-      { rank: 174, posRank: 'DST6', name: 'Ravens D/ST', team: 'BAL', bye: 13, pos: 'DST', proj: 115, adp: 174.1, health: 'CLEAN', note: 'Perennial top fantasy defense in Baltimore.' },
-      { rank: 175, posRank: 'DST7', name: 'Eagles D/ST', team: 'PHI', bye: 10, pos: 'DST', proj: 114, adp: 175.2, health: 'CLEAN', note: 'Vic Fangio defensive secondary and front.' },
-      { rank: 176, posRank: 'DST8', name: 'Browns D/ST', team: 'CLE', bye: 11, pos: 'DST', proj: 113, adp: 176.1, health: 'CLEAN', note: 'Myles Garrett dominant pass rush unit.' },
-      { rank: 177, posRank: 'DST9', name: 'Patriots D/ST', team: 'NE', bye: 11, pos: 'DST', proj: 112, adp: 177.2, health: 'CLEAN', note: 'Disciplined turnover-generating defense in NE.' },
-      { rank: 178, posRank: 'DST10', name: 'Lions D/ST', team: 'DET', bye: 6, pos: 'DST', proj: 111, adp: 178.1, health: 'CLEAN', note: 'Aidan Hutchinson pass rush in Detroit.' },
-      { rank: 179, posRank: 'DST11', name: 'Chiefs D/ST', team: 'KC', bye: 5, pos: 'DST', proj: 110, adp: 179.2, health: 'CLEAN', note: 'Steve Spagnuolo championship caliber unit.' },
-      { rank: 180, posRank: 'DST12', name: 'Chargers D/ST', team: 'LAC', bye: 7, pos: 'DST', proj: 109, adp: 180.1, health: 'CLEAN', note: 'Jesse Minter physical defense in LA.' },
-
-      // Top ESPN Kickers
-      { rank: 181, posRank: 'K1', name: 'Brandon Aubrey', team: 'DAL', bye: 14, pos: 'K', proj: 152, adp: 181.2, health: 'CLEAN', note: 'ESPN K1. Unmatched 50+ yard field goal leg.' },
-      { rank: 182, posRank: 'K2', name: 'Cameron Dicker', team: 'LAC', bye: 7, pos: 'K', proj: 148, adp: 182.1, health: 'CLEAN', note: 'Harbaugh field position and high conversion accuracy.' },
-      { rank: 183, posRank: 'K3', name: 'Jason Myers', team: 'SEA', bye: 11, pos: 'K', proj: 145, adp: 183.2, health: 'CLEAN', note: 'Consistent scoring opportunities in Seattle.' },
-      { rank: 184, posRank: 'K4', name: 'Harrison Mevis', team: 'LAR', bye: 11, pos: 'K', proj: 144, adp: 184.1, health: 'CLEAN', note: 'High-octane McVay offense drives field goals.' },
-      { rank: 185, posRank: 'K5', name: "Ka'imi Fairbairn", team: 'HOU', bye: 8, pos: 'K', proj: 142, adp: 185.2, health: 'CLEAN', note: 'Houston offense provides frequent FG tries.' },
-      { rank: 186, posRank: 'K6', name: 'Eddy Pineiro', team: 'SF', bye: 8, pos: 'K', proj: 140, adp: 186.1, health: 'CLEAN', note: '49ers offensive engine drives red zone opportunities.' },
-      { rank: 187, posRank: 'K7', name: 'Harrison Butker', team: 'KC', bye: 5, pos: 'K', proj: 139, adp: 187.2, health: 'CLEAN', note: 'Reliable weapon for Mahomes and Chiefs.' },
-      { rank: 188, posRank: 'K8', name: 'Cam Little', team: 'JAC', bye: 7, pos: 'K', proj: 138, adp: 188.1, health: 'CLEAN', note: 'Strong-legged placekicker in Jacksonville.' },
-      { rank: 189, posRank: 'K9', name: 'Jake Bates', team: 'DET', bye: 6, pos: 'K', proj: 137, adp: 189.2, health: 'CLEAN', note: 'High scoring Lions offense creates scoring baseline.' },
-      { rank: 190, posRank: 'K10', name: 'Tyler Loop', team: 'BAL', bye: 13, pos: 'K', proj: 136, adp: 190.1, health: 'CLEAN', note: 'Reliable placekicker in Baltimore.' },
-      { rank: 191, posRank: 'K11', name: 'Cairo Santos', team: 'CHI', bye: 10, pos: 'K', proj: 135, adp: 191.2, health: 'CLEAN', note: 'Consistent kicker in Chicago.' },
-      { rank: 192, posRank: 'K12', name: 'Will Reichard', team: 'MIN', bye: 6, pos: 'K', proj: 134, adp: 192.1, health: 'CLEAN', note: 'Accurate young kicker in Minnesota.' },
-
-      // Back to Skills
-      { rank: 193, posRank: 'RB57', name: 'Najee Harris', team: 'NYG', bye: 8, pos: 'RB', proj: 92, adp: 193.2, health: 'CLEAN', note: 'Volume grinder with inside power in NY.' },
-      { rank: 194, posRank: 'TE21', name: 'Brenton Strange', team: 'JAC', bye: 7, pos: 'TE', proj: 95, adp: 194.1, health: 'CLEAN', note: 'Tight end target in Jacksonville.' },
-      { rank: 195, posRank: 'RB58', name: 'Alvin Kamara', team: 'NO', bye: 8, pos: 'RB', proj: 90, adp: 195.2, health: 'RISK', riskReason: 'Recovering from MCL sprain and veteran maintenance protocol.', note: 'PPR receiving weapon in New Orleans.' },
-      { rank: 196, posRank: 'RB59', name: 'Justice Hill', team: 'BAL', bye: 13, pos: 'RB', proj: 88, adp: 196.1, health: 'CLEAN', note: 'Third-down protection and receiving staple in Baltimore.' },
-      { rank: 197, posRank: 'WR72', name: "Ja'Kobi Lane", team: 'BAL', bye: 13, pos: 'WR', proj: 86, adp: 197.2, health: 'CLEAN', note: 'Rookie wideout for Ravens.' },
-      { rank: 198, posRank: 'QB22', name: 'Jordan Love', team: 'GB', bye: 11, pos: 'QB', proj: 260, adp: 198.1, health: 'CLEAN', note: 'Starting signal caller with deep young weapon set in Green Bay.' },
-      { rank: 199, posRank: 'QB23', name: 'C.J. Stroud', team: 'HOU', bye: 8, pos: 'QB', proj: 265, adp: 199.2, health: 'CLEAN', note: 'Elite passing accuracy with Nico Collins in Houston.' },
-      { rank: 200, posRank: 'QB24', name: 'Sam Darnold', team: 'SEA', bye: 11, pos: 'QB', proj: 245, adp: 200.1, health: 'CLEAN', note: 'Experienced distributor in Seattle system.' },
-
-      // --- RANKINGS 201 - 240 ---
-      { rank: 201, posRank: 'WR73', name: 'Jauan Jennings', team: 'MIN', bye: 6, pos: 'WR', proj: 85, adp: 201.2, health: 'CLEAN', note: 'Third-down conversion machine in Minnesota.' },
-      { rank: 202, posRank: 'WR74', name: 'Tank Dell', team: 'HOU', bye: 8, pos: 'WR', proj: 84, adp: 202.1, health: 'CLEAN', note: 'Electric separator and deep-threat weapon for Stroud.' },
-      { rank: 203, posRank: 'WR75', name: 'Germie Bernard', team: 'PIT', bye: 9, pos: 'WR', proj: 82, adp: 203.2, health: 'CLEAN', note: 'Rookie wideout in Pittsburgh.' },
-      { rank: 204, posRank: 'WR76', name: 'Tre Harris', team: 'LAC', bye: 7, pos: 'WR', proj: 80, adp: 204.1, health: 'CLEAN', note: 'Big-bodied target in Chargers offense.' },
-      { rank: 205, posRank: 'WR77', name: 'Ryan Flournoy', team: 'DAL', bye: 14, pos: 'WR', proj: 78, adp: 205.2, health: 'CLEAN', note: 'Perimeter depth receiver in Dallas.' },
-      { rank: 206, posRank: 'TE22', name: 'Pat Freiermuth', team: 'PIT', bye: 9, pos: 'TE', proj: 88, adp: 206.1, health: 'CLEAN', note: 'Red zone target in Pittsburgh.' },
-      { rank: 207, posRank: 'TE23', name: 'Dalton Schultz', team: 'HOU', bye: 8, pos: 'TE', proj: 86, adp: 207.2, health: 'CLEAN', note: 'Trusted third-down target for Stroud in Houston.' },
-      { rank: 208, posRank: 'WR78', name: 'Zachariah Branch', team: 'ATL', bye: 11, pos: 'WR', proj: 76, adp: 208.1, health: 'CLEAN', note: 'Speedster in Atlanta.' },
-      { rank: 209, posRank: 'WR79', name: 'Omar Cooper Jr.', team: 'NYJ', bye: 13, pos: 'WR', proj: 75, adp: 209.2, health: 'CLEAN', note: 'Rookie wideout in NY.' },
-      { rank: 210, posRank: 'WR80', name: 'Kayshon Boutte', team: 'HOU', bye: 8, pos: 'WR', proj: 74, adp: 210.1, health: 'CLEAN', note: 'Depth receiver in Houston.' },
-      { rank: 211, posRank: 'WR81', name: 'Malik Washington', team: 'MIA', bye: 6, pos: 'WR', proj: 72, adp: 211.2, health: 'CLEAN', note: 'Slot weapon in Miami.' },
-      { rank: 212, posRank: 'RB60', name: 'Jordan James', team: 'SF', bye: 8, pos: 'RB', proj: 82, adp: 212.1, health: 'CLEAN', note: 'Rookie runner in Shanahan system.' },
-      { rank: 213, posRank: 'RB61', name: 'Kaelon Black', team: 'SF', bye: 8, pos: 'RB', proj: 80, adp: 213.2, health: 'CLEAN', note: 'Depth runner in SF.' },
-      { rank: 214, posRank: 'RB62', name: 'Kimani Vidal', team: 'LAC', bye: 7, pos: 'RB', proj: 78, adp: 214.1, health: 'CLEAN', note: 'High-density runner in Harbaugh system.' },
-      { rank: 215, posRank: 'TE24', name: 'Gunnar Helm', team: 'TEN', bye: 9, pos: 'TE', proj: 82, adp: 215.2, health: 'CLEAN', note: 'Rookie tight end in Tennessee.' },
-      { rank: 216, posRank: 'TE25', name: 'Chig Okonkwo', team: 'WAS', bye: 7, pos: 'TE', proj: 80, adp: 216.1, health: 'CLEAN', note: 'Explosive YAC tight end in Washington.' },
-      { rank: 217, posRank: 'TE26', name: 'AJ Barner', team: 'SEA', bye: 11, pos: 'TE', proj: 78, adp: 217.2, health: 'CLEAN', note: 'Physical blocking tight end in Seattle.' },
-      { rank: 218, posRank: 'QB25', name: 'Bryce Young', team: 'CAR', bye: 5, pos: 'QB', proj: 235, adp: 218.1, health: 'CLEAN', note: 'Starting quarterback in Carolina with upgraded targets.' },
-      { rank: 219, posRank: 'QB26', name: 'Cam Ward', team: 'TEN', bye: 9, pos: 'QB', proj: 230, adp: 219.2, health: 'CLEAN', note: 'Rookie dynamic quarterback in Tennessee.' },
-      { rank: 220, posRank: 'QB27', name: 'Jacoby Brissett', team: 'ARI', bye: 14, pos: 'QB', proj: 200, adp: 220.1, health: 'CLEAN', note: 'Dependable veteran spot starter.' },
-      { rank: 221, posRank: 'RB63', name: 'Jaylen Wright', team: 'MIA', bye: 6, pos: 'RB', proj: 76, adp: 221.2, health: 'CLEAN', note: 'Explosive runner in perimeter wide-zone system.' },
-      { rank: 222, posRank: 'RB64', name: 'Ollie Gordon II', team: 'MIA', bye: 6, pos: 'RB', proj: 75, adp: 222.1, health: 'CLEAN', note: 'Physical rookie runner in Miami.' },
-      { rank: 223, posRank: 'RB65', name: 'Samaje Perine', team: 'CIN', bye: 6, pos: 'RB', proj: 74, adp: 223.2, health: 'CLEAN', note: 'Reliable third down back in Cincinnati.' },
-      { rank: 224, posRank: 'WR82', name: 'Cooper Kupp', team: 'SEA', bye: 11, pos: 'WR', proj: 75, adp: 224.1, health: 'CLEAN', note: 'Veteran master route runner in Seattle.' },
-      { rank: 225, posRank: 'RB66', name: 'Ty Johnson', team: 'BUF', bye: 7, pos: 'RB', proj: 72, adp: 225.2, health: 'CLEAN', note: 'Change of pace runner for Bills.' },
-      { rank: 226, posRank: 'RB67', name: 'Isaiah Davis', team: 'NYJ', bye: 13, pos: 'RB', proj: 70, adp: 226.1, health: 'CLEAN', note: 'Inside reserve running back for Jets.' },
-      { rank: 227, posRank: 'WR83', name: 'Xavier Legette', team: 'CAR', bye: 5, pos: 'WR', proj: 72, adp: 227.2, health: 'CLEAN', note: 'Physical rookie alpha with deep speed.' },
-      { rank: 228, posRank: 'WR84', name: 'Jahan Dotson', team: 'ATL', bye: 11, pos: 'WR', proj: 70, adp: 228.1, health: 'CLEAN', note: 'Smooth route runner in Atlanta.' },
-      { rank: 229, posRank: 'WR85', name: 'Darius Slayton', team: 'NYG', bye: 8, pos: 'WR', proj: 68, adp: 229.2, health: 'CLEAN', note: 'Deep perimeter speed weapon in NY.' },
-      { rank: 230, posRank: 'WR86', name: 'Jalen Tolbert', team: 'MIA', bye: 6, pos: 'WR', proj: 66, adp: 230.1, health: 'CLEAN', note: 'Perimeter receiver in Miami.' },
-      { rank: 231, posRank: 'WR87', name: 'DeMario Douglas', team: 'NE', bye: 11, pos: 'WR', proj: 65, adp: 231.2, health: 'CLEAN', note: 'Agile slot playmaker for Patriots.' },
-      { rank: 232, posRank: 'WR88', name: 'Chris Bell', team: 'MIA', bye: 6, pos: 'WR', proj: 64, adp: 232.1, health: 'CLEAN', note: 'Rookie wideout in Miami.' },
-      { rank: 233, posRank: 'WR89', name: 'Antonio Williams', team: 'WAS', bye: 7, pos: 'WR', proj: 62, adp: 233.2, health: 'CLEAN', note: 'Slot receiver in Washington.' },
-      { rank: 234, posRank: 'WR90', name: 'Tyquan Thornton', team: 'KC', bye: 5, pos: 'WR', proj: 60, adp: 234.1, health: 'CLEAN', note: 'Speed receiver in Kansas City.' },
-      { rank: 235, posRank: 'DST13', name: 'Buccaneers D/ST', team: 'TB', bye: 10, pos: 'DST', proj: 105, adp: 235.2, health: 'CLEAN', note: 'Todd Bowles blitz-heavy defense in Tampa.' },
-      { rank: 236, posRank: 'DST14', name: 'Packers D/ST', team: 'GB', bye: 11, pos: 'DST', proj: 104, adp: 236.1, health: 'CLEAN', note: 'Ball-hawking secondary in Green Bay.' },
-      { rank: 237, posRank: 'K13', name: 'Chris Boswell', team: 'PIT', bye: 9, pos: 'K', proj: 130, adp: 237.2, health: 'CLEAN', note: 'Veteran clutch field goal specialist in Pittsburgh.' },
-      { rank: 238, posRank: 'K14', name: 'Chase McLaughlin', team: 'TB', bye: 10, pos: 'K', proj: 128, adp: 238.1, health: 'CLEAN', note: 'High conversion kicker in Tampa.' },
-      { rank: 239, posRank: 'RB68', name: 'Jaydon Blue', team: 'DAL', bye: 14, pos: 'RB', proj: 68, adp: 239.2, health: 'CLEAN', note: 'Rookie back in Dallas.' },
-      { rank: 240, posRank: 'RB69', name: 'Kaytron Allen', team: 'WAS', bye: 7, pos: 'RB', proj: 66, adp: 240.1, health: 'CLEAN', note: 'Rookie physical runner in Washington.' },
-
-      // --- RANKINGS 241 - 300 ---
-      { rank: 241, posRank: 'RB70', name: 'Tyrone Tracy Jr.', team: 'NYG', bye: 8, pos: 'RB', proj: 65, adp: 241.2, health: 'CLEAN', note: 'Converted wideout with electric receiving upside.' },
-      { rank: 242, posRank: 'RB71', name: 'Nicholas Singleton', team: 'TEN', bye: 9, pos: 'RB', proj: 64, adp: 242.1, health: 'CLEAN', note: 'Rookie runner in Tennessee.' },
-      { rank: 243, posRank: 'RB72', name: 'Demond Claiborne', team: 'MIN', bye: 6, pos: 'RB', proj: 62, adp: 243.2, health: 'CLEAN', note: 'Rookie back in Minnesota.' },
-      { rank: 244, posRank: 'RB73', name: 'Adam Randall', team: 'BAL', bye: 13, pos: 'RB', proj: 60, adp: 244.1, health: 'CLEAN', note: 'Rookie runner in Baltimore.' },
-      { rank: 245, posRank: 'RB74', name: 'Emmett Johnson', team: 'KC', bye: 5, pos: 'RB', proj: 58, adp: 245.2, health: 'CLEAN', note: 'Rookie back in KC.' },
-      { rank: 246, posRank: 'RB75', name: 'LeQuint Allen', team: 'JAC', bye: 7, pos: 'RB', proj: 56, adp: 246.1, health: 'CLEAN', note: 'Rookie back in Jacksonville.' },
-      { rank: 247, posRank: 'RB76', name: 'George Holani', team: 'SEA', bye: 11, pos: 'RB', proj: 55, adp: 247.2, health: 'CLEAN', note: 'Physical runner in Seattle.' },
-      { rank: 248, posRank: 'RB77', name: 'Sean Tucker', team: 'TB', bye: 10, pos: 'RB', proj: 54, adp: 248.1, health: 'CLEAN', note: 'Speed depth runner in Tampa.' },
-      { rank: 249, posRank: 'RB78', name: 'James Conner', team: 'ARI', bye: 14, pos: 'RB', proj: 52, adp: 249.2, health: 'CLEAN', note: 'Veteran goal line back in Arizona.' },
-      { rank: 250, posRank: 'RB79', name: 'Emari Demercado', team: 'KC', bye: 5, pos: 'RB', proj: 50, adp: 250.1, health: 'CLEAN', note: 'Third-down pass protector in KC.' },
-      { rank: 251, posRank: 'RB80', name: 'Seth McGowan', team: 'IND', bye: 13, pos: 'RB', proj: 48, adp: 251.2, health: 'CLEAN', note: 'Rookie back in Indianapolis.' },
-      { rank: 252, posRank: 'WR91', name: 'Keon Coleman', team: 'BUF', bye: 7, pos: 'WR', proj: 55, adp: 252.1, health: 'CLEAN', note: 'Big-bodied contested target for Josh Allen.' },
-      { rank: 253, posRank: 'WR92', name: 'Isaac TeSlaa', team: 'DET', bye: 6, pos: 'WR', proj: 52, adp: 253.2, health: 'CLEAN', note: 'Rookie receiver in Detroit.' },
-      { rank: 254, posRank: 'DST15', name: 'Jaguars D/ST', team: 'JAC', bye: 7, pos: 'DST', proj: 102, adp: 254.1, health: 'CLEAN', note: 'Turnover generating defense in Jacksonville.' },
-      { rank: 255, posRank: 'DST16', name: 'Saints D/ST', team: 'NO', bye: 8, pos: 'DST', proj: 100, adp: 255.2, health: 'CLEAN', note: 'Aggressive defensive unit in New Orleans.' },
-      { rank: 256, posRank: 'K15', name: 'Evan McPherson', team: 'CIN', bye: 6, pos: 'K', proj: 125, adp: 256.1, health: 'CLEAN', note: 'Clutch kicker for Bengals.' },
-      { rank: 257, posRank: 'K16', name: 'Nick Folk', team: 'ATL', bye: 11, pos: 'K', proj: 122, adp: 257.2, health: 'CLEAN', note: 'Veteran accurate kicker in Atlanta.' },
-      { rank: 258, posRank: 'TE27', name: 'Greg Dulcich', team: 'MIA', bye: 6, pos: 'TE', proj: 65, adp: 258.1, health: 'CLEAN', note: 'Pass-catching tight end in Miami.' },
-      { rank: 259, posRank: 'TE28', name: 'Darren Waller', team: 'CAR', bye: 5, pos: 'TE', proj: 62, adp: 259.2, health: 'CLEAN', note: 'Veteran red zone mismatch in Carolina.' },
-      { rank: 260, posRank: 'TE29', name: 'Cade Otton', team: 'TB', bye: 10, pos: 'TE', proj: 60, adp: 260.1, health: 'CLEAN', note: 'Every-down tight end for Tampa.' },
-      { rank: 261, posRank: 'WR93', name: 'Pat Bryant', team: 'DEN', bye: 10, pos: 'WR', proj: 48, adp: 261.2, health: 'CLEAN', note: 'Rookie receiver in Denver.' },
-      { rank: 262, posRank: 'WR94', name: 'Darnell Mooney', team: 'NYG', bye: 8, pos: 'WR', proj: 46, adp: 262.1, health: 'CLEAN', note: 'Speed separator in New York.' },
-      { rank: 263, posRank: 'WR95', name: 'Marvin Mims Jr.', team: 'DEN', bye: 10, pos: 'WR', proj: 45, adp: 263.2, health: 'CLEAN', note: 'Speedster with return ability in Denver.' },
-      { rank: 264, posRank: 'WR96', name: 'Malachi Fields', team: 'NYG', bye: 8, pos: 'WR', proj: 44, adp: 264.1, health: 'CLEAN', note: 'Rookie boundary receiver in NY.' },
-      { rank: 265, posRank: 'RB81', name: 'Chris Brooks', team: 'GB', bye: 11, pos: 'RB', proj: 45, adp: 265.2, health: 'CLEAN', note: 'Physical depth back in Green Bay.' },
-      { rank: 266, posRank: 'RB82', name: 'Emanuel Wilson', team: 'SEA', bye: 11, pos: 'RB', proj: 44, adp: 266.1, health: 'CLEAN', note: 'Power runner in Seattle.' },
-      { rank: 267, posRank: 'QB28', name: 'Geno Smith', team: 'NYJ', bye: 13, pos: 'QB', proj: 215, adp: 267.2, health: 'CLEAN', note: 'Veteran distributor in New York.' },
-      { rank: 268, posRank: 'QB29', name: 'Fernando Mendoza', team: 'LV', bye: 13, pos: 'QB', proj: 200, adp: 268.1, health: 'CLEAN', note: 'Rookie quarterback in Las Vegas.' },
-      { rank: 269, posRank: 'QB30', name: 'Aaron Rodgers', team: 'PIT', bye: 9, pos: 'QB', proj: 210, adp: 269.2, health: 'CLEAN', note: 'Veteran pocket commander in Pittsburgh.' },
-      { rank: 270, posRank: 'QB31', name: 'Deshaun Watson', team: 'CLE', bye: 11, pos: 'QB', proj: 205, adp: 270.1, health: 'CLEAN', note: 'Veteran quarterback in Cleveland.' },
-      { rank: 271, posRank: 'WR97', name: 'KaVontae Turpin', team: 'DAL', bye: 14, pos: 'WR', proj: 42, adp: 271.2, health: 'CLEAN', note: 'All-Pro returner with gadget touches.' },
-      { rank: 272, posRank: 'WR98', name: 'Jack Bech', team: 'LV', bye: 13, pos: 'WR', proj: 40, adp: 272.1, health: 'CLEAN', note: 'Rookie receiver in Las Vegas.' },
-      { rank: 273, posRank: 'WR99', name: 'Tory Horton', team: 'SEA', bye: 11, pos: 'WR', proj: 38, adp: 273.2, health: 'CLEAN', note: 'Rookie wideout in Seattle.' },
-      { rank: 274, posRank: 'WR100', name: 'Ted Hurst', team: 'TB', bye: 10, pos: 'WR', proj: 36, adp: 274.1, health: 'CLEAN', note: 'Rookie target in Tampa.' },
-      { rank: 275, posRank: 'WR101', name: 'Andrei Iosivas', team: 'CIN', bye: 6, pos: 'WR', proj: 35, adp: 275.2, health: 'CLEAN', note: 'Athletic red-zone weapon in Cincinnati.' },
-      { rank: 276, posRank: 'RB83', name: 'Will Shipley', team: 'PHI', bye: 10, pos: 'RB', proj: 40, adp: 276.1, health: 'CLEAN', note: 'Dual-threat pass catcher behind Saquon.' },
-      { rank: 277, posRank: 'RB84', name: 'Malik Davis', team: 'DAL', bye: 14, pos: 'RB', proj: 38, adp: 277.2, health: 'CLEAN', note: 'Depth runner in Dallas.' },
-      { rank: 278, posRank: 'RB85', name: 'Kendre Miller', team: 'NO', bye: 8, pos: 'RB', proj: 36, adp: 278.1, health: 'CLEAN', note: 'Young back in New Orleans.' },
-      { rank: 279, posRank: 'RB86', name: 'Tahj Brooks', team: 'CIN', bye: 6, pos: 'RB', proj: 35, adp: 279.2, health: 'CLEAN', note: 'Rookie power runner in Cincinnati.' },
-      { rank: 280, posRank: 'RB87', name: 'Trevor Etienne', team: 'CAR', bye: 5, pos: 'RB', proj: 34, adp: 280.1, health: 'CLEAN', note: 'Rookie runner in Carolina.' },
-      { rank: 281, posRank: 'RB88', name: 'DJ Giddens', team: 'IND', bye: 13, pos: 'RB', proj: 32, adp: 281.2, health: 'CLEAN', note: 'Rookie back in Indianapolis.' },
-      { rank: 282, posRank: 'RB89', name: 'Jawhar Jordan', team: 'HOU', bye: 8, pos: 'RB', proj: 30, adp: 282.1, health: 'CLEAN', note: 'Speed runner in Houston.' },
-      { rank: 283, posRank: 'RB90', name: 'Kaleb Johnson', team: 'PIT', bye: 9, pos: 'RB', proj: 28, adp: 283.2, health: 'CLEAN', note: 'Rookie physical runner in Pittsburgh.' },
-      { rank: 284, posRank: 'WR102', name: 'Mack Hollins', team: 'NE', bye: 11, pos: 'WR', proj: 30, adp: 284.1, health: 'CLEAN', note: 'Physical blocker and red zone weapon in NE.' },
-      { rank: 285, posRank: 'DST17', name: 'Bears D/ST', team: 'CHI', bye: 10, pos: 'DST', proj: 98, adp: 285.2, health: 'CLEAN', note: 'Turnover defense in Chicago.' },
-      { rank: 286, posRank: 'DST18', name: 'Jets D/ST', team: 'NYJ', bye: 13, pos: 'DST', proj: 96, adp: 286.1, health: 'CLEAN', note: 'Solid defensive front in New York.' },
-      { rank: 287, posRank: 'K17', name: 'Trey Smack', team: 'GB', bye: 11, pos: 'K', proj: 118, adp: 287.2, health: 'CLEAN', note: 'Young kicker in Green Bay.' },
-      { rank: 288, posRank: 'K18', name: 'Jake Elliott', team: 'PHI', bye: 10, pos: 'K', proj: 116, adp: 288.1, health: 'CLEAN', note: 'Veteran accurate kicker in Philadelphia.' },
-      { rank: 289, posRank: 'TE30', name: 'Evan Engram', team: 'DEN', bye: 10, pos: 'TE', proj: 55, adp: 289.2, health: 'CLEAN', note: 'Pass catching veteran tight end in Denver.' },
-      { rank: 290, posRank: 'TE31', name: 'David Njoku', team: 'LAC', bye: 7, pos: 'TE', proj: 54, adp: 290.1, health: 'CLEAN', note: 'Athletic tight end in Los Angeles.' },
-      { rank: 291, posRank: 'TE32', name: 'Oronde Gadsden', team: 'LAC', bye: 7, pos: 'TE', proj: 52, adp: 291.2, health: 'CLEAN', note: 'Rookie receiving weapon in LA.' },
-      { rank: 292, posRank: 'TE33', name: 'Mike Gesicki', team: 'CIN', bye: 6, pos: 'TE', proj: 50, adp: 292.1, health: 'CLEAN', note: 'Slot mismatch weapon in Cincinnati.' },
-      { rank: 293, posRank: 'TE34', name: 'Michael Mayer', team: 'LV', bye: 13, pos: 'TE', proj: 48, adp: 293.2, health: 'CLEAN', note: 'Two-way tight end in Las Vegas.' },
-      { rank: 294, posRank: 'WR103', name: 'Tutu Atwell', team: 'MIA', bye: 6, pos: 'WR', proj: 28, adp: 294.1, health: 'CLEAN', note: 'Speedster in Miami space offense.' },
-      { rank: 295, posRank: 'WR104', name: 'Cyrus Allen', team: 'KC', bye: 5, pos: 'WR', proj: 26, adp: 295.2, health: 'CLEAN', note: 'Rookie receiver in Kansas City.' },
-      { rank: 296, posRank: 'QB32', name: 'Tua Tagovailoa', team: 'ATL', bye: 11, pos: 'QB', proj: 195, adp: 296.1, health: 'CLEAN', note: 'Quick-release distributor in Atlanta.' },
-      { rank: 297, posRank: 'DST19', name: '49ers D/ST', team: 'SF', bye: 8, pos: 'DST', proj: 94, adp: 297.2, health: 'CLEAN', note: 'Physical defensive front in SF.' },
-      { rank: 298, posRank: 'DST20', name: 'Cowboys D/ST', team: 'DAL', bye: 14, pos: 'DST', proj: 92, adp: 298.1, health: 'CLEAN', note: 'Playmaking defense in Dallas.' },
-      { rank: 299, posRank: 'DST21', name: 'Colts D/ST', team: 'IND', bye: 13, pos: 'DST', proj: 90, adp: 299.2, health: 'CLEAN', note: 'Turnover front in Indianapolis.' },
-      { rank: 300, posRank: 'DST22', name: 'Vikings D/ST', team: 'MIN', bye: 6, pos: 'DST', proj: 88, adp: 300.0, health: 'CLEAN', note: 'Brian Flores chaotic blitz scheme in Minnesota.' }
-    ];
-
     function generateFullESPN300PlayerDatabase() {
-      return ESPN_TOP_300_SEED.map((p) => {
-        let tier = 1;
-        if (p.rank > 200) tier = 5;
-        else if (p.rank > 120) tier = 4;
-        else if (p.rank > 60) tier = 3;
-        else if (p.rank > 20) tier = 2;
+      return [
+        // --- ROUND 1 (1-12) ---
+        { id: "p1", name: "Jahmyr Gibbs", pos: "RB", team: "DET", bye: 6, proj: 322, tier: 1, adp: 1.1, rank: 1, health: "CLEAN", note: "Elite 3-down bellcow and explosive receiving weapon behind dominant Lions line." },
+        { id: "p2", name: "Bijan Robinson", pos: "RB", team: "ATL", bye: 11, proj: 318, tier: 1, adp: 2.2, rank: 2, health: "CLEAN", note: "Pristine athletic profile with massive touch share and goal-line monopoly in Atlanta." },
+        { id: "p3", name: "Ja'Marr Chase", pos: "WR", team: "CIN", bye: 6, proj: 310, tier: 1, adp: 3.3, rank: 3, health: "RISK", riskReason: "Practice knee hyperextension scare; held out as precaution with Week 1 monitoring.", note: "Alpha WR1 with unmatched target share and explosive ceiling in Bengals pass offense." },
+        { id: "p4", name: "Puka Nacua", pos: "WR", team: "LAR", bye: 11, proj: 302, tier: 1, adp: 4.4, rank: 4, health: "CLEAN", note: "Primary timing engine in McVay offense; elite route separation and target volume." },
+        { id: "p5", name: "Jaxon Smith-Njigba", pos: "WR", team: "SEA", bye: 11, proj: 295, tier: 1, adp: 5.5, rank: 5, health: "CLEAN", note: "Dominant WR1 target funnel in Seattle with top-tier separation metrics." },
+        { id: "p6", name: "Christian McCaffrey", pos: "RB", team: "SF", bye: 8, proj: 288, tier: 1, adp: 6.6, rank: 6, health: "RISK", riskReason: "Bilateral Achilles tendinitis & calf strain history; managing strict practice maintenance.", note: "Generational dual-threat ceiling; managing soft-tissue maintenance in San Francisco." },
+        { id: "p7", name: "Jonathan Taylor", pos: "RB", team: "IND", bye: 13, proj: 285, tier: 1, adp: 7.7, rank: 7, health: "CLEAN", note: "Physical bellcow workhorse with pure rushing volume and goal-line monopoly for Colts." },
+        { id: "p8", name: "Amon-Ra St. Brown", pos: "WR", team: "DET", bye: 6, proj: 292, tier: 1, adp: 8.8, rank: 8, health: "CLEAN", note: "PPR gold standard; commands high intermediate target volume across Detroit drives." },
+        { id: "p9", name: "CeeDee Lamb", pos: "WR", team: "DAL", bye: 14, proj: 290, tier: 1, adp: 9.9, rank: 9, health: "CLEAN", note: "Target vacuum in high-paced Dallas passing scheme with George Pickens opposite." },
+        { id: "p10", name: "Justin Jefferson", pos: "WR", team: "MIN", bye: 6, proj: 284, tier: 1, adp: 10.1, rank: 10, health: "CLEAN", note: "Premier perimeter target in Minnesota; primary vacuum for Kevin O'Connell." },
+        { id: "p11", name: "De'Von Achane", pos: "RB", team: "MIA", bye: 6, proj: 278, tier: 1, adp: 11.2, rank: 11, health: "CLEAN", note: "Unmatched yards-per-touch explosive ceiling; game-breaking home-run threat." },
+        { id: "p12", name: "James Cook III", pos: "RB", team: "BUF", bye: 7, proj: 275, tier: 1, adp: 12.0, rank: 12, health: "CLEAN", note: "Expanded goal line work and dual-threat receiving role in high-scoring Bills attack." },
 
-        return {
-          ...p,
-          id: `p_${p.rank}_${p.name.replace(/[^a-zA-Z0-9]/g, '')}`,
-          tier: tier
-        };
-      });
+        // --- ROUND 2 (13-24) ---
+        { id: "p13", name: "Jeremiyah Love", pos: "RB", team: "ARI", bye: 14, proj: 268, tier: 2, adp: 13.5, rank: 13, health: "CLEAN", note: "Ascending rookie 3-down starter with elite acceleration and passing-down chops." },
+        { id: "p14", name: "Drake London", pos: "WR", team: "ATL", bye: 11, proj: 270, tier: 2, adp: 14.8, rank: 14, health: "CLEAN", note: "Contested-catch alpha with concentrated target dominance in Atlanta." },
+        { id: "p15", name: "Saquon Barkley", pos: "RB", team: "PHI", bye: 10, proj: 276, tier: 2, adp: 15.6, rank: 15, health: "CLEAN", note: "High-efficiency three-down workhorse behind physical Eagles offensive line." },
+        { id: "p16", name: "Derrick Henry", pos: "RB", team: "BAL", bye: 13, proj: 265, tier: 2, adp: 16.5, rank: 16, health: "CLEAN", note: "Untouchable goal-line touchdown floor in run-heavy Ravens scheme with Lamar." },
+        { id: "p17", name: "Ashton Jeanty", pos: "RB", team: "LV", bye: 13, proj: 260, tier: 2, adp: 17.5, rank: 17, health: "RISK", riskReason: "Preseason low-ankle sprain; expected active Week 1 but monitored for conditioning.", note: "Elite contact balance and volume magnet leading Raiders ground game." },
+        { id: "p18", name: "Kenneth Walker III", pos: "RB", team: "KC", bye: 5, proj: 262, tier: 2, adp: 18.4, rank: 18, health: "CLEAN", note: "Dynamic dual-threat playmaker taking over featured touches in Kansas City." },
+        { id: "p19", name: "Chase Brown", pos: "RB", team: "CIN", bye: 6, proj: 258, tier: 2, adp: 19.3, rank: 19, health: "CLEAN", note: "Lead pass-catching back in elite offense; steady high-floor weekly producer." },
+        { id: "p20", name: "Trey McBride", pos: "TE", team: "ARI", bye: 14, proj: 242, tier: 1, adp: 20.2, rank: 20, health: "CLEAN", note: "High-volume TE1 target earner with unmatched positional target share in Arizona." },
+        { id: "p21", name: "Brock Bowers", pos: "TE", team: "LV", bye: 13, proj: 240, tier: 1, adp: 21.0, rank: 21, health: "CLEAN", note: "Generational dynamic tight end weapon utilized across entire formation." },
+        { id: "p22", name: "Omarion Hampton", pos: "RB", team: "LAC", bye: 7, proj: 254, tier: 2, adp: 22.1, rank: 22, health: "CLEAN", note: "Power back prototype commanding heavy early-down and goal-line work for Chargers." },
+        { id: "p23", name: "Breece Hall", pos: "RB", team: "NYJ", bye: 13, proj: 255, tier: 2, adp: 23.2, rank: 23, health: "CLEAN", note: "Elite dual-threat all-purpose back with game-breaking receiving ceiling." },
+        { id: "p24", name: "Rashee Rice", pos: "WR", team: "KC", bye: 5, proj: 260, tier: 2, adp: 24.0, rank: 24, health: "CLEAN", note: "YAC engine and trusted intermediate target for Patrick Mahomes." },
+
+        // --- ROUND 3 (25-36) ---
+        { id: "p25", name: "Nico Collins", pos: "WR", team: "HOU", bye: 8, proj: 264, tier: 2, adp: 25.1, rank: 25, health: "CLEAN", note: "Dominant boundary alpha; massive target ceiling in Texans pass-first scheme." },
+        { id: "p26", name: "A.J. Brown", pos: "WR", team: "NE", bye: 11, proj: 262, tier: 2, adp: 26.2, rank: 26, health: "CLEAN", note: "Physical target monster anchoring New England's re-tooled passing offense." },
+        { id: "p27", name: "Chris Olave", pos: "WR", team: "NO", bye: 8, proj: 256, tier: 2, adp: 27.0, rank: 27, health: "CLEAN", note: "Smooth separator commanding massive air yards share as Saints WR1." },
+        { id: "p28", name: "Malik Nabers", pos: "WR", team: "NYG", bye: 8, proj: 255, tier: 2, adp: 28.1, rank: 28, health: "CLEAN", note: "Explosive target vacuum; unmatched playmaking speed with high target projection." },
+        { id: "p29", name: "Garrett Wilson", pos: "WR", team: "NYJ", bye: 13, proj: 252, tier: 2, adp: 29.2, rank: 29, health: "CLEAN", note: "Elite route technician commanding massive perimeter target funnel." },
+        { id: "p30", name: "Josh Jacobs", pos: "RB", team: "GB", bye: 11, proj: 248, tier: 2, adp: 30.0, rank: 30, health: "SUSP", riskReason: "NFL personal-conduct review pending offseason Wisconsin charges; potential multi-game absence.", note: "High volume between the tackles; monitoring league discipline review." },
+        { id: "p31", name: "George Pickens", pos: "WR", team: "DAL", bye: 14, proj: 246, tier: 2, adp: 31.2, rank: 31, health: "CLEAN", note: "Downfield contested-catch maven thriving in high-powered Cowboys attack." },
+        { id: "p32", name: "Javonte Williams", pos: "RB", team: "DAL", bye: 14, proj: 240, tier: 2, adp: 32.5, rank: 32, health: "CLEAN", note: "Heavy early-down volume behind physical Dallas front." },
+        { id: "p33", name: "Tetairoa McMillan", pos: "WR", team: "CAR", bye: 5, proj: 242, tier: 2, adp: 33.4, rank: 33, health: "CLEAN", note: "Massive catch radius rookie anchoring Panthers primary passing tree." },
+        { id: "p34", name: "Zay Flowers", pos: "WR", team: "BAL", bye: 13, proj: 244, tier: 2, adp: 34.2, rank: 34, health: "CLEAN", note: "Dynamic open-field creator and focal receiver for Lamar Jackson." },
+        { id: "p35", name: "DeVonta Smith", pos: "WR", team: "PHI", bye: 10, proj: 240, tier: 2, adp: 35.1, rank: 35, health: "CLEAN", note: "Precision route runner with pristine efficiency and touchdown upside." },
+        { id: "p36", name: "Josh Allen", pos: "QB", team: "BUF", bye: 7, proj: 388, tier: 1, adp: 36.0, rank: 36, health: "CLEAN", note: "QB1 overall ceiling with heavy designed red-zone rushing scores for Bills." },
+
+        // --- ROUND 4 (37-48) ---
+        { id: "p37", name: "Travis Etienne Jr.", pos: "RB", team: "NO", bye: 8, proj: 238, tier: 3, adp: 37.2, rank: 37, health: "CLEAN", note: "Lead back duties in New Orleans with solid pass-catching floor." },
+        { id: "p38", name: "Kyren Williams", pos: "RB", team: "LAR", bye: 11, proj: 240, tier: 3, adp: 38.0, rank: 38, health: "CLEAN", note: "High red-zone snap percentage and proven efficiency in Rams run game." },
+        { id: "p39", name: "Quinshon Judkins", pos: "RB", team: "CLE", bye: 11, proj: 235, tier: 3, adp: 39.1, rank: 39, health: "CLEAN", note: "Physical rookie workhorse in Browns power run scheme." },
+        { id: "p40", name: "Cam Skattebo", pos: "RB", team: "NYG", bye: 8, proj: 232, tier: 3, adp: 40.2, rank: 40, health: "CLEAN", note: "Tough between-the-tackles rookie runner earning primary goal line snaps." },
+        { id: "p41", name: "Bucky Irving", pos: "RB", team: "TB", bye: 10, proj: 234, tier: 3, adp: 41.3, rank: 41, health: "CLEAN", note: "Elusive space creator earning high-value backfield touches in Tampa." },
+        { id: "p42", name: "Emeka Egbuka", pos: "WR", team: "TB", bye: 10, proj: 236, tier: 3, adp: 42.1, rank: 42, health: "CLEAN", note: "Smooth slot technician with steady weekly reception volume." },
+        { id: "p43", name: "Davante Adams", pos: "WR", team: "LAR", bye: 11, proj: 238, tier: 3, adp: 43.0, rank: 43, health: "CLEAN", note: "Masterful red-zone route runner and veteran timing target." },
+        { id: "p44", name: "Ladd McConkey", pos: "WR", team: "LAC", bye: 7, proj: 235, tier: 3, adp: 44.2, rank: 44, health: "CLEAN", note: "Primary separation receiver and trusted 3rd-down option for Herbert." },
+        { id: "p45", name: "Terry McLaurin", pos: "WR", team: "WAS", bye: 7, proj: 234, tier: 3, adp: 45.1, rank: 45, health: "CLEAN", note: "Downfield ball-winner building chemistry with Jayden Daniels." },
+        { id: "p46", name: "Tee Higgins", pos: "WR", team: "CIN", bye: 6, proj: 235, tier: 3, adp: 46.0, rank: 46, health: "CLEAN", note: "Premier perimeter weapon with weekly multi-touchdown ceiling." },
+        { id: "p47", name: "Jaylen Waddle", pos: "WR", team: "DEN", bye: 10, proj: 232, tier: 3, adp: 47.1, rank: 47, health: "CLEAN", note: "Blazing field-stretcher taking over primary WR1 duties in Denver." },
+        { id: "p48", name: "Rome Odunze", pos: "WR", team: "CHI", bye: 10, proj: 230, tier: 3, adp: 48.0, rank: 48, health: "CLEAN", note: "Ascending outside weapon commanding high-leverage red zone targets." },
+
+        // --- ROUND 5 (49-60) ---
+        { id: "p49", name: "Colston Loveland", pos: "TE", team: "CHI", bye: 10, proj: 220, tier: 2, adp: 49.2, rank: 49, health: "CLEAN", note: "Dynamic rookie tight end with high target share in Chicago pass attack." },
+        { id: "p50", name: "Tyler Warren", pos: "TE", team: "IND", bye: 13, proj: 218, tier: 2, adp: 50.1, rank: 50, health: "CLEAN", note: "Versatile hybrid playmaker commanding middle-of-the-field targets." },
+        { id: "p51", name: "Jameson Williams", pos: "WR", team: "DET", bye: 6, proj: 228, tier: 3, adp: 51.0, rank: 51, health: "CLEAN", note: "Electric deep threat with expanded full-time snap share in Detroit." },
+        { id: "p52", name: "DJ Moore", pos: "WR", team: "BUF", bye: 7, proj: 226, tier: 3, adp: 52.2, rank: 52, health: "CLEAN", note: "YAC monster and perimeter playmaker paired with Josh Allen." },
+        { id: "p53", name: "Luther Burden III", pos: "WR", team: "CHI", bye: 10, proj: 224, tier: 3, adp: 53.1, rank: 53, health: "CLEAN", note: "Explosive run-after-catch rookie creator commanding designed touches." },
+        { id: "p54", name: "Carnell Tate", pos: "WR", team: "TEN", bye: 9, proj: 220, tier: 3, adp: 54.0, rank: 54, health: "CLEAN", note: "Smooth rookie separator stepping directly into immediate starting role." },
+        { id: "p55", name: "Jayden Daniels", pos: "QB", team: "WAS", bye: 7, proj: 362, tier: 1, adp: 55.2, rank: 55, health: "CLEAN", note: "Konami-code rushing floor with deep passing accuracy in Kingsbury offense." },
+        { id: "p56", name: "Lamar Jackson", pos: "QB", team: "BAL", bye: 13, proj: 378, tier: 1, adp: 56.1, rank: 56, health: "CLEAN", note: "Dual-threat MVP upside with safe weekly rushing baseline." },
+        { id: "p57", name: "Drake Maye", pos: "QB", team: "NE", bye: 11, proj: 350, tier: 2, adp: 57.0, rank: 57, health: "CLEAN", note: "Dual-threat breakout leader in New England with A.J. Brown." },
+        { id: "p58", name: "Jalen Hurts", pos: "QB", team: "PHI", bye: 10, proj: 358, tier: 1, adp: 58.1, rank: 58, health: "CLEAN", note: "Tush-push rushing touchdown engine with Saquon in Philly." },
+        { id: "p59", name: "D'Andre Swift", pos: "RB", team: "CHI", bye: 10, proj: 230, tier: 3, adp: 59.0, rank: 59, health: "CLEAN", note: "Primary pass-catching back in Chicago with steady touch floor." },
+        { id: "p60", name: "Bhayshul Tuten", pos: "RB", team: "JAC", bye: 7, proj: 225, tier: 3, adp: 60.1, rank: 60, health: "CLEAN", note: "Fast-rising rookie back commanding early-down and goal line snaps." },
+
+        // --- ROUND 6 (61-72) ---
+        { id: "p61", name: "David Montgomery", pos: "RB", team: "HOU", bye: 8, proj: 222, tier: 3, adp: 61.2, rank: 61, health: "CLEAN", note: "Veteran touchdown grinder anchoring Texans power short-yardage game." },
+        { id: "p62", name: "Jadarian Price", pos: "RB", team: "SEA", bye: 11, proj: 218, tier: 3, adp: 62.1, rank: 62, health: "CLEAN", note: "Explosive one-cut rookie runner taking over high-value touches." },
+        { id: "p63", name: "Rhamondre Stevenson", pos: "RB", team: "NE", bye: 11, proj: 220, tier: 3, adp: 63.0, rank: 63, health: "CLEAN", note: "Physical workhorse back leading Patriots downhill rushing attack." },
+        { id: "p64", name: "Jaylen Warren", pos: "RB", team: "PIT", bye: 9, proj: 215, tier: 3, adp: 64.2, rank: 64, health: "CLEAN", note: "Pass-catching satellite back with efficient change-of-pace role." },
+        { id: "p65", name: "Courtland Sutton", pos: "WR", team: "DEN", bye: 10, proj: 218, tier: 3, adp: 65.1, rank: 65, health: "CLEAN", note: "Red-zone contested ball winner in Sean Payton's Denver scheme." },
+        { id: "p66", name: "Michael Pittman Jr.", pos: "WR", team: "PIT", bye: 9, proj: 220, tier: 3, adp: 66.0, rank: 66, health: "CLEAN", note: "High-volume possession chain-mover leading Steelers wideout corps." },
+        { id: "p67", name: "Marvin Harrison Jr.", pos: "WR", team: "ARI", bye: 14, proj: 228, tier: 3, adp: 67.2, rank: 67, health: "CLEAN", note: "Alpha perimeter receiver with big-play upside in Arizona." },
+        { id: "p68", name: "DK Metcalf", pos: "WR", team: "PIT", bye: 9, proj: 222, tier: 3, adp: 68.1, rank: 68, health: "CLEAN", note: "Physical perimeter mismatch with vertical deep-ball equity." },
+        { id: "p69", name: "Parker Washington", pos: "WR", team: "JAC", bye: 7, proj: 212, tier: 4, adp: 69.0, rank: 69, health: "CLEAN", note: "Ascending slot playmaker earning reliable 3rd-down targets." },
+        { id: "p70", name: "Alec Pierce", pos: "WR", team: "IND", bye: 13, proj: 214, tier: 4, adp: 70.1, rank: 70, health: "RISK", riskReason: "Mild groin tightness in camp; expected active Week 1 with monitored snap count.", note: "Deep threat tracking vertical air yards in Indianapolis." },
+        { id: "p71", name: "Kyle Pitts Sr.", pos: "TE", team: "ATL", bye: 11, proj: 210, tier: 3, adp: 71.0, rank: 71, health: "CLEAN", note: "Athletic hybrid mismatch operating in Atlanta's condensed passing tree." },
+        { id: "p72", name: "Harold Fannin Jr.", pos: "TE", team: "CLE", bye: 11, proj: 205, tier: 3, adp: 72.1, rank: 72, health: "CLEAN", note: "Dynamic rookie pass-catcher carving out immediate seam-stretching role." },
+
+        // --- ROUND 7 (73-84) ---
+        { id: "p73", name: "Sam LaPorta", pos: "TE", team: "DET", bye: 6, proj: 216, tier: 3, adp: 73.0, rank: 73, health: "CLEAN", note: "Proven red-zone target in high-scoring Lions offense." },
+        { id: "p74", name: "Joe Burrow", pos: "QB", team: "CIN", bye: 6, proj: 338, tier: 2, adp: 74.2, rank: 74, health: "CLEAN", note: "Elite pocket passer with Chase & Higgins in Cincinnati." },
+        { id: "p75", name: "Jaxson Dart", pos: "QB", team: "NYG", bye: 8, proj: 310, tier: 3, adp: 75.1, rank: 75, health: "CLEAN", note: "Dynamic rookie dual-threat signal caller with Nabers in New York." },
+        { id: "p76", name: "Christian Watson", pos: "WR", team: "GB", bye: 11, proj: 212, tier: 3, adp: 76.0, rank: 76, health: "CLEAN", note: "Vertical field-stretcher and touchdown magnet in Green Bay." },
+        { id: "p77", name: "Mike Evans", pos: "WR", team: "SF", bye: 8, proj: 210, tier: 3, adp: 77.2, rank: 77, health: "RISK", riskReason: "Recurrent hamstring tightness & 30+ veteran workload management; elevated re-injury risk.", note: "Veteran red zone weapon managing soft-tissue precautions in SF." },
+        { id: "p78", name: "Matthew Golden", pos: "WR", team: "GB", bye: 11, proj: 204, tier: 4, adp: 78.1, rank: 78, health: "CLEAN", note: "Rookie speedster creating explosive plays in Packers rotation." },
+        { id: "p79", name: "Brian Thomas Jr.", pos: "WR", team: "JAC", bye: 7, proj: 218, tier: 3, adp: 79.0, rank: 79, health: "CLEAN", note: "Elite deep threat and WR1 for Trevor Lawrence in Jacksonville." },
+        { id: "p80", name: "Michael Wilson", pos: "WR", team: "ARI", bye: 14, proj: 202, tier: 4, adp: 80.1, rank: 80, health: "CLEAN", note: "Physical boundary receiver complementing Marvin Harrison." },
+        { id: "p81", name: "Jakobi Meyers", pos: "WR", team: "JAC", bye: 7, proj: 200, tier: 4, adp: 81.0, rank: 81, health: "CLEAN", note: "Reliable intermediate chain-mover with high reception floor." },
+        { id: "p82", name: "Trevor Lawrence", pos: "QB", team: "JAC", bye: 7, proj: 315, tier: 3, adp: 82.2, rank: 82, health: "CLEAN", note: "Solid QB2 value in high-volume Jacksonville scheme." },
+        { id: "p83", name: "Dak Prescott", pos: "QB", team: "DAL", bye: 14, proj: 318, tier: 3, adp: 83.1, rank: 83, health: "CLEAN", note: "Pass-heavy script leader with CeeDee Lamb and Pickens." },
+        { id: "p84", name: "Bo Nix", pos: "QB", team: "DEN", bye: 10, proj: 305, tier: 3, adp: 84.0, rank: 84, health: "CLEAN", note: "High completion percentage and sneaky scramble yards in Denver." },
+
+        // --- ROUND 8 (85-96) ---
+        { id: "p85", name: "Brock Purdy", pos: "QB", team: "SF", bye: 8, proj: 308, tier: 3, adp: 85.1, rank: 85, health: "CLEAN", note: "Elite Shanahan offensive efficiency and weapons distributor." },
+        { id: "p86", name: "Matthew Stafford", pos: "QB", team: "LAR", bye: 11, proj: 298, tier: 3, adp: 86.0, rank: 86, health: "CLEAN", note: "Veteran master distributor in McVay passing attack." },
+        { id: "p87", name: "Caleb Williams", pos: "QB", team: "CHI", bye: 10, proj: 312, tier: 3, adp: 87.2, rank: 87, health: "CLEAN", note: "Loaded offensive supporting cast with Rome and Loveland." },
+        { id: "p88", name: "Wan'Dale Robinson", pos: "WR", team: "TEN", bye: 9, proj: 198, tier: 4, adp: 88.1, rank: 88, health: "CLEAN", note: "PPR slot machine commanding designed short-yardage looks." },
+        { id: "p89", name: "Jordan Addison", pos: "WR", team: "MIN", bye: 6, proj: 206, tier: 3, adp: 89.0, rank: 89, health: "CLEAN", note: "Dynamic separator opposite Justin Jefferson with weekly ceiling." },
+        { id: "p90", name: "De'Zhaun Stribling", pos: "WR", team: "SF", bye: 8, proj: 195, tier: 4, adp: 90.2, rank: 90, health: "CLEAN", note: "Rookie boundary weapon earning reps in 49ers rotation." },
+        { id: "p91", name: "Khalil Shakir", pos: "WR", team: "BUF", bye: 7, proj: 202, tier: 4, adp: 91.1, rank: 91, health: "CLEAN", note: "YAC specialist and trusted slot target for Josh Allen." },
+        { id: "p92", name: "Jayden Reed", pos: "WR", team: "GB", bye: 11, proj: 205, tier: 3, adp: 92.0, rank: 92, health: "CLEAN", note: "Versatile gadget and slot weapon in versatile Packers attack." },
+        { id: "p93", name: "Justin Herbert", pos: "QB", team: "LAC", bye: 7, proj: 302, tier: 3, adp: 93.1, rank: 93, health: "CLEAN", note: "Arm talent leader in disciplined Chargers offense." },
+        { id: "p94", name: "Patrick Mahomes", pos: "QB", team: "KC", bye: 5, proj: 325, tier: 2, adp: 94.0, rank: 94, health: "CLEAN", note: "Consistently top-tier passing floor and real-game mastery." },
+        { id: "p95", name: "Rico Dowdle", pos: "RB", team: "PIT", bye: 9, proj: 195, tier: 4, adp: 95.2, rank: 95, health: "CLEAN", note: "Rotational committee back with goal-line opportunities." },
+        { id: "p96", name: "Jonathon Brooks", pos: "RB", team: "CAR", bye: 5, proj: 198, tier: 4, adp: 96.1, rank: 96, health: "CLEAN", note: "Ascending talent pushing for starting backfield share." },
+
+        // --- ROUND 9 (97-108) ---
+        { id: "p97", name: "TreVeyon Henderson", pos: "RB", team: "NE", bye: 11, proj: 200, tier: 4, adp: 97.0, rank: 97, health: "CLEAN", note: "Explosive rookie back carving out primary touches in New England." },
+        { id: "p98", name: "Tony Pollard", pos: "RB", team: "TEN", bye: 9, proj: 195, tier: 4, adp: 98.2, rank: 98, health: "CLEAN", note: "Veteran speed back sharing workload in Tennessee." },
+        { id: "p99", name: "Kenny Gainwell", pos: "RB", team: "TB", bye: 10, proj: 188, tier: 4, adp: 99.1, rank: 99, health: "CLEAN", note: "Pass-catching change of pace back for Buccaneers." },
+        { id: "p100", name: "Chuba Hubbard", pos: "RB", team: "CAR", bye: 5, proj: 192, tier: 4, adp: 100.0, rank: 100, health: "CLEAN", note: "Proven volume runner maintaining steady early-down role." },
+        { id: "p101", name: "George Kittle", pos: "TE", team: "SF", bye: 8, proj: 198, tier: 3, adp: 101.2, rank: 101, health: "RISK", riskReason: "Late-stage Achilles tendon recovery; active on practice field with managed snap limits.", note: "Elite ceiling when healthy; managing veteran workload in SF." },
+        { id: "p102", name: "Tucker Kraft", pos: "TE", team: "GB", bye: 11, proj: 195, tier: 3, adp: 102.1, rank: 102, health: "CLEAN", note: "YAC monster and ascending primary tight end in Green Bay." },
+        { id: "p103", name: "Dallas Goedert", pos: "TE", team: "PHI", bye: 10, proj: 190, tier: 4, adp: 103.0, rank: 103, health: "CLEAN", note: "Reliable intermediate safety valve for Jalen Hurts." },
+        { id: "p104", name: "Travis Kelce", pos: "TE", team: "KC", bye: 5, proj: 192, tier: 4, adp: 104.2, rank: 104, health: "CLEAN", note: "Legendary red zone presence managing veteran snap efficiency." },
+        { id: "p105", name: "J.K. Dobbins", pos: "RB", team: "DEN", bye: 10, proj: 195, tier: 4, adp: 105.1, rank: 105, health: "CLEAN", note: "Efficient between-tackles runner in Payton's Denver scheme." },
+        { id: "p106", name: "Kyle Monangai", pos: "RB", team: "CHI", bye: 10, proj: 185, tier: 4, adp: 106.0, rank: 106, health: "CLEAN", note: "Physical rookie grinder adding depth to Chicago backfield." },
+        { id: "p107", name: "Jacory Croskey-Merritt", pos: "RB", team: "WAS", bye: 7, proj: 182, tier: 4, adp: 107.2, rank: 107, health: "CLEAN", note: "Explosive rookie runner with high per-touch efficiency." },
+        { id: "p108", name: "Aaron Jones Sr.", pos: "RB", team: "MIN", bye: 6, proj: 190, tier: 4, adp: 108.1, rank: 108, health: "CLEAN", note: "Veteran touch manager maintaining solid receiving floor." },
+
+        // --- ROUND 10 (109-120) ---
+        { id: "p109", name: "Jake Ferguson", pos: "TE", team: "DAL", bye: 14, proj: 188, tier: 4, adp: 109.0, rank: 109, health: "CLEAN", note: "High-floor red-zone target in Dak Prescott passing tree." },
+        { id: "p110", name: "Mark Andrews", pos: "TE", team: "BAL", bye: 13, proj: 190, tier: 4, adp: 110.2, rank: 110, health: "CLEAN", note: "Veteran touchdown target commanding red zone looks." },
+        { id: "p111", name: "Isaiah Likely", pos: "TE", team: "NYG", bye: 8, proj: 185, tier: 4, adp: 111.1, rank: 111, health: "CLEAN", note: "Dynamic seam stretcher stepping into expanded starting role." },
+        { id: "p112", name: "Xavier Worthy", pos: "WR", team: "KC", bye: 5, proj: 198, tier: 4, adp: 112.0, rank: 112, health: "CLEAN", note: "World-class speed threat and gadget weapon for Mahomes." },
+        { id: "p113", name: "Quentin Johnston", pos: "WR", team: "LAC", bye: 7, proj: 190, tier: 4, adp: 113.2, rank: 113, health: "CLEAN", note: "Perimeter contested catch receiver in Chargers offense." },
+        { id: "p114", name: "Stefon Diggs", pos: "WR", team: "WAS", bye: 7, proj: 192, tier: 4, adp: 114.1, rank: 114, health: "CLEAN", note: "Veteran route craftsman operating in Washington passing tree." },
+        { id: "p115", name: "Rachaad White", pos: "RB", team: "WAS", bye: 7, proj: 185, tier: 4, adp: 115.0, rank: 115, health: "CLEAN", note: "High-reception receiving back earning third-down duties." },
+        { id: "p116", name: "Dalton Kincaid", pos: "TE", team: "BUF", bye: 7, proj: 185, tier: 4, adp: 116.2, rank: 116, health: "CLEAN", note: "Slot tight end vacuum in high-scoring Buffalo scheme." },
+        { id: "p117", name: "T.J. Hockenson", pos: "TE", team: "MIN", bye: 6, proj: 188, tier: 4, adp: 117.1, rank: 117, health: "RISK", riskReason: "Multi-ligament knee rehab progression; projected active early season with snap pacing.", note: "Elite target earner when fully ramped up in Minnesota." },
+        { id: "p118", name: "Hunter Henry", pos: "TE", team: "NE", bye: 11, proj: 178, tier: 4, adp: 118.0, rank: 118, health: "CLEAN", note: "Steady red-zone security blanket for Drake Maye." },
+        { id: "p119", name: "Terrance Ferguson", pos: "TE", team: "LAR", bye: 11, proj: 175, tier: 5, adp: 119.2, rank: 119, health: "CLEAN", note: "Rookie tight end earning pass-catching reps in LA." },
+        { id: "p120", name: "Jordan Mason", pos: "RB", team: "MIN", bye: 6, proj: 182, tier: 4, adp: 120.1, rank: 120, health: "CLEAN", note: "Physical between-tackles runner in Vikings committee." },
+
+        // --- ROUND 11 (121-132) ---
+        { id: "p121", name: "Blake Corum", pos: "RB", team: "LAR", bye: 11, proj: 188, tier: 4, adp: 121.0, rank: 121, health: "CLEAN", note: "Top-tier standalone and goal-line contingency runner." },
+        { id: "p122", name: "RJ Harvey", pos: "RB", team: "DEN", bye: 10, proj: 185, tier: 4, adp: 122.2, rank: 122, health: "CLEAN", note: "Rookie burst runner with high upside in Payton scheme." },
+        { id: "p123", name: "Woody Marks", pos: "RB", team: "HOU", bye: 8, proj: 178, tier: 4, adp: 123.1, rank: 123, health: "CLEAN", note: "Pass-catching rookie back carving out passing down role." },
+        { id: "p124", name: "Josh Downs", pos: "WR", team: "IND", bye: 13, proj: 188, tier: 4, adp: 124.0, rank: 124, health: "CLEAN", note: "High-separation slot receiver earning steady intermediate looks." },
+        { id: "p125", name: "KC Concepcion", pos: "WR", team: "CLE", bye: 11, proj: 180, tier: 5, adp: 125.2, rank: 125, health: "CLEAN", note: "Dynamic rookie receiver creating separation in Cleveland." },
+        { id: "p126", name: "Makai Lemon", pos: "WR", team: "PHI", bye: 10, proj: 178, tier: 5, adp: 126.1, rank: 126, health: "CLEAN", note: "Rookie slot weapon adding speed to Eagles pass attack." },
+        { id: "p127", name: "Chris Godwin Jr.", pos: "WR", team: "TB", bye: 10, proj: 185, tier: 4, adp: 127.0, rank: 127, health: "CLEAN", note: "Reliable veteran inside possession receiver in Tampa." },
+        { id: "p128", name: "Deebo Samuel Sr.", pos: "WR", team: "SF", bye: 8, proj: 188, tier: 4, adp: 128.2, rank: 128, health: "CLEAN", note: "Physical dual-threat weapon generating yards after catch." },
+        { id: "p129", name: "Romeo Doubs", pos: "WR", team: "NE", bye: 11, proj: 180, tier: 5, adp: 129.1, rank: 129, health: "CLEAN", note: "Contested-catch boundary receiver for Patriots." },
+        { id: "p130", name: "Jalen Coker", pos: "WR", team: "CAR", bye: 5, proj: 178, tier: 5, adp: 130.0, rank: 130, health: "CLEAN", note: "Physical young possession receiver earning starting reps." },
+        { id: "p131", name: "Rashid Shaheed", pos: "WR", team: "SEA", bye: 11, proj: 182, tier: 4, adp: 131.2, rank: 131, health: "CLEAN", note: "Deep ball burner and return specialist in Seattle." },
+        { id: "p132", name: "Jalen McMillan", pos: "WR", team: "TB", bye: 10, proj: 180, tier: 5, adp: 132.1, rank: 132, health: "CLEAN", note: "Ascending slot technician earning high-value red zone looks." },
+
+        // --- ROUND 12 (133-144) ---
+        { id: "p133", name: "Kyler Murray", pos: "QB", team: "MIN", bye: 6, proj: 320, tier: 2, adp: 133.0, rank: 133, health: "CLEAN", note: "High rushing floor and dual-threat value in Minnesota." },
+        { id: "p134", name: "Tyler Shough", pos: "QB", team: "NO", bye: 8, proj: 280, tier: 4, adp: 134.2, rank: 134, health: "CLEAN", note: "Rookie arm talent competing for starting snaps." },
+        { id: "p135", name: "Jared Goff", pos: "QB", team: "DET", bye: 6, proj: 305, tier: 3, adp: 135.1, rank: 135, health: "CLEAN", note: "High-volume pocket passer in explosive Lions offense." },
+        { id: "p136", name: "Daniel Jones", pos: "QB", team: "IND", bye: 13, proj: 285, tier: 4, adp: 136.0, rank: 136, health: "CLEAN", note: "Dual-threat veteran quarterback with rushing floor." },
+        { id: "p137", name: "Zach Charbonnet", pos: "RB", team: "SEA", bye: 11, proj: 180, tier: 4, adp: 137.2, rank: 137, health: "RISK", riskReason: "Minor foot soreness managed during joint practices; full clearance for kickoff.", note: "High-end contingency handcuff in Seattle." },
+        { id: "p138", name: "Tyjae Spears", pos: "RB", team: "TEN", bye: 9, proj: 182, tier: 4, adp: 138.1, rank: 138, health: "CLEAN", note: "Explosive change of pace back with high reception floor." },
+        { id: "p139", name: "Chris Rodriguez Jr.", pos: "RB", team: "JAC", bye: 7, proj: 172, tier: 5, adp: 139.0, rank: 139, health: "CLEAN", note: "Downhill runner handling short yardage work." },
+        { id: "p140", name: "Brian Robinson Jr.", pos: "RB", team: "ATL", bye: 11, proj: 178, tier: 5, adp: 140.2, rank: 140, health: "CLEAN", note: "Power grinder supporting backfield depth in Atlanta." },
+        { id: "p141", name: "Tyler Allgeier", pos: "RB", team: "ARI", bye: 14, proj: 170, tier: 5, adp: 141.1, rank: 141, health: "CLEAN", note: "Physical backup runner with standalone goal-line role." },
+        { id: "p142", name: "MarShawn Lloyd", pos: "RB", team: "GB", bye: 11, proj: 175, tier: 5, adp: 142.0, rank: 142, health: "CLEAN", note: "Explosive change of pace back; crucial handcuff to Josh Jacobs." },
+        { id: "p143", name: "Denzel Boston", pos: "WR", team: "CLE", bye: 11, proj: 170, tier: 5, adp: 143.2, rank: 143, health: "CLEAN", note: "Rookie boundary weapon earning rotation targets." },
+        { id: "p144", name: "Jerry Jeudy", pos: "WR", team: "CLE", bye: 11, proj: 172, tier: 5, adp: 144.1, rank: 144, health: "CLEAN", note: "Route technician operating in Browns wideout corps." },
+
+        // --- ROUND 13 (145-156) ---
+        { id: "p145", name: "Calvin Ridley", pos: "WR", team: "TEN", bye: 9, proj: 175, tier: 5, adp: 145.0, rank: 145, health: "CLEAN", note: "Perimeter route specialist with big-play pedigree." },
+        { id: "p146", name: "Adonai Mitchell", pos: "WR", team: "NYJ", bye: 13, proj: 170, tier: 5, adp: 146.2, rank: 146, health: "CLEAN", note: "Vertical speedster carving out deep-ball role." },
+        { id: "p147", name: "Travis Hunter", pos: "WR", team: "JAC", bye: 7, proj: 172, tier: 5, adp: 147.1, rank: 147, health: "CLEAN", note: "Two-way dynamic athlete creating space in Jacksonville." },
+        { id: "p148", name: "Caleb Douglas", pos: "WR", team: "MIA", bye: 6, proj: 165, tier: 5, adp: 148.0, rank: 148, health: "CLEAN", note: "Young perimeter speedster earning reps in Miami." },
+        { id: "p149", name: "Baker Mayfield", pos: "QB", team: "TB", bye: 10, proj: 290, tier: 4, adp: 149.2, rank: 149, health: "CLEAN", note: "Gritty veteran starter with aggressive downfield passing." },
+        { id: "p150", name: "Malik Willis", pos: "QB", team: "MIA", bye: 6, proj: 270, tier: 4, adp: 150.1, rank: 150, health: "CLEAN", note: "Dynamic dual-threat quarterback with rushing upside." },
+        { id: "p151", name: "Jordyn Tyson", pos: "WR", team: "NO", bye: 8, proj: 165, tier: 5, adp: 151.0, rank: 151, health: "OUT/PUP", riskReason: "Severe hamstring tear on active/PUP; projected sidelined through first month.", note: "High ceiling rookie stashed on injury list." },
+        { id: "p152", name: "Tre Tucker", pos: "WR", team: "LV", bye: 13, proj: 168, tier: 5, adp: 152.2, rank: 152, health: "CLEAN", note: "Slot burner generating explosive splash plays." },
+        { id: "p153", name: "Jalen Nailor", pos: "WR", team: "LV", bye: 13, proj: 165, tier: 5, adp: 153.1, rank: 153, health: "CLEAN", note: "Speedy rotational wideout in Raiders passing scheme." },
+        { id: "p154", name: "Keaton Mitchell", pos: "RB", team: "LAC", bye: 7, proj: 170, tier: 5, adp: 154.0, rank: 154, health: "CLEAN", note: "Lightning-fast change-of-pace runner." },
+        { id: "p155", name: "Isiah Pacheco", pos: "RB", team: "DET", bye: 6, proj: 175, tier: 5, adp: 155.2, rank: 155, health: "CLEAN", note: "Physical downhill runner in Lions backfield rotation." },
+        { id: "p156", name: "Jonah Coleman", pos: "RB", team: "DEN", bye: 10, proj: 168, tier: 5, adp: 156.1, rank: 156, health: "CLEAN", note: "Rookie between-the-tackles grinder for Denver." },
+
+        // --- ROUND 14 (157-168) ---
+        { id: "p157", name: "Mike Washington Jr.", pos: "RB", team: "LV", bye: 13, proj: 165, tier: 5, adp: 157.0, rank: 157, health: "CLEAN", note: "Power rookie back handling depth touches." },
+        { id: "p158", name: "Braelon Allen", pos: "RB", team: "NYJ", bye: 13, proj: 172, tier: 5, adp: 158.2, rank: 158, health: "CLEAN", note: "Elite goal-line contingency back behind Breece Hall." },
+        { id: "p159", name: "Kenyon Sadiq", pos: "TE", team: "NYJ", bye: 13, proj: 160, tier: 5, adp: 159.1, rank: 159, health: "CLEAN", note: "Athletic rookie tight end in developmental role." },
+        { id: "p160", name: "Juwan Johnson", pos: "TE", team: "NO", bye: 8, proj: 162, tier: 5, adp: 160.0, rank: 160, health: "CLEAN", note: "Red-zone target receiver in New Orleans." },
+        { id: "p161", name: "Keenan Allen", pos: "WR", team: "IND", bye: 13, proj: 165, tier: 5, adp: 161.2, rank: 161, health: "CLEAN", note: "Master veteran route craftsman and 3rd down chain-mover." },
+        { id: "p162", name: "Rashod Bateman", pos: "WR", team: "BAL", bye: 13, proj: 162, tier: 5, adp: 162.1, rank: 162, health: "CLEAN", note: "Perimeter route separator for Lamar Jackson." },
+        { id: "p163", name: "Dontayvion Wicks", pos: "WR", team: "PHI", bye: 10, proj: 164, tier: 5, adp: 163.0, rank: 163, health: "CLEAN", note: "Elite route separation metrics in rotational role." },
+        { id: "p164", name: "Devaughn Vele", pos: "WR", team: "NO", bye: 8, proj: 158, tier: 5, adp: 164.2, rank: 164, health: "CLEAN", note: "Big-bodied boundary target earning reps." },
+        { id: "p165", name: "Jaylin Noel", pos: "WR", team: "HOU", bye: 8, proj: 155, tier: 5, adp: 165.1, rank: 165, health: "CLEAN", note: "Rookie speedster creating separation in Houston." },
+        { id: "p166", name: "Tank Bigsby", pos: "RB", team: "PHI", bye: 10, proj: 160, tier: 5, adp: 166.0, rank: 166, health: "CLEAN", note: "Physical power runner providing backfield depth." },
+        { id: "p167", name: "Ray Davis", pos: "RB", team: "BUF", bye: 7, proj: 165, tier: 5, adp: 167.2, rank: 167, health: "CLEAN", note: "Goal-line complement and direct handcuff to James Cook." },
+        { id: "p168", name: "Dylan Sampson", pos: "RB", team: "CLE", bye: 11, proj: 158, tier: 5, adp: 168.1, rank: 168, health: "CLEAN", note: "Fast rookie runner carving out change-of-pace snaps." },
+
+        // --- ROUND 15 (169-180 - DEFENSES & SLEEPERS) ---
+        { id: "p169", name: "Houston Texans", pos: "DST", team: "HOU", bye: 8, proj: 125, tier: 1, adp: 169.0, rank: 169, health: "CLEAN", note: "Elite pass-rush front with Will Anderson and Danielle Hunter." },
+        { id: "p170", name: "Denver Broncos", pos: "DST", team: "DEN", bye: 10, proj: 122, tier: 1, adp: 170.2, rank: 170, health: "CLEAN", note: "Vance Joseph aggressive blitz-heavy scheme generating sacks." },
+        { id: "p171", name: "Pittsburgh Steelers", pos: "DST", team: "PIT", bye: 9, proj: 124, tier: 1, adp: 171.1, rank: 171, health: "CLEAN", note: "T.J. Watt strip-sack threat with high baseline floor." },
+        { id: "p172", name: "Seattle Seahawks", pos: "DST", team: "SEA", bye: 11, proj: 120, tier: 1, adp: 172.0, rank: 172, health: "CLEAN", note: "Mike Macdonald defensive scheme forcing turnovers." },
+        { id: "p173", name: "Los Angeles Rams", pos: "DST", team: "LAR", bye: 11, proj: 118, tier: 2, adp: 173.2, rank: 173, health: "CLEAN", note: "Young aggressive pass-rush front generating pressure." },
+        { id: "p174", name: "Baltimore Ravens", pos: "DST", team: "BAL", bye: 13, proj: 122, tier: 1, adp: 174.1, rank: 174, health: "CLEAN", note: "Perennially elite defensive unit with stout run-stopping." },
+        { id: "p175", name: "Philadelphia Eagles", pos: "DST", team: "PHI", bye: 10, proj: 120, tier: 1, adp: 175.0, rank: 175, health: "CLEAN", note: "Vic Fangio disciplined secondary and physical front four." },
+        { id: "p176", name: "Cleveland Browns", pos: "DST", team: "CLE", bye: 11, proj: 121, tier: 1, adp: 176.2, rank: 176, health: "CLEAN", note: "Myles Garrett led defensive front with elite pressure rate." },
+        { id: "p177", name: "New England Patriots", pos: "DST", team: "NE", bye: 11, proj: 115, tier: 2, adp: 177.1, rank: 177, health: "CLEAN", note: "Disciplined situational defense limiting big plays." },
+        { id: "p178", name: "Detroit Lions", pos: "DST", team: "DET", bye: 6, proj: 119, tier: 2, adp: 178.0, rank: 178, health: "CLEAN", note: "Aidan Hutchinson pass rush leading physical unit." },
+        { id: "p179", name: "Kansas City Chiefs", pos: "DST", team: "KC", bye: 5, proj: 120, tier: 1, adp: 179.2, rank: 179, health: "CLEAN", note: "Spagnuolo playoff-caliber blitz packages and ball-hawking." },
+        { id: "p180", name: "Los Angeles Chargers", pos: "DST", team: "LAC", bye: 7, proj: 116, tier: 2, adp: 180.1, rank: 180, health: "CLEAN", note: "Jim Harbaugh disciplined ball-control defensive scheme." },
+
+        // --- ROUND 16 (181-192 - KICKERS & BACKUPS) ---
+        { id: "p181", name: "Brandon Aubrey", pos: "K", team: "DAL", bye: 14, proj: 155, tier: 1, adp: 181.0, rank: 181, health: "CLEAN", note: "Long-distance FG weapon with elite accuracy from 50+ yards." },
+        { id: "p182", name: "Cameron Dicker", pos: "K", team: "LAC", bye: 7, proj: 148, tier: 1, adp: 182.2, rank: 182, health: "CLEAN", note: "High-accuracy field goal specialist in Harbaugh offense." },
+        { id: "p183", name: "Jason Myers", pos: "K", team: "SEA", bye: 11, proj: 144, tier: 1, adp: 183.1, rank: 183, health: "CLEAN", note: "Consistent volume kicker in Seattle dome/perimeter conditions." },
+        { id: "p184", name: "Harrison Mevis", pos: "K", team: "LAR", bye: 11, proj: 142, tier: 2, adp: 184.0, rank: 184, health: "CLEAN", note: "Strong-legged rookie kicker operating in high-powered Rams attack." },
+        { id: "p185", name: "Ka'imi Fairbairn", pos: "K", team: "HOU", bye: 8, proj: 146, tier: 1, adp: 185.2, rank: 185, health: "CLEAN", note: "High-scoring Texans offense provides frequent FG opportunities." },
+        { id: "p186", name: "Eddy Pineiro", pos: "K", team: "SF", bye: 8, proj: 140, tier: 2, adp: 186.1, rank: 186, health: "CLEAN", note: "Reliable scoring weapon in 49ers offensive engine." },
+        { id: "p187", name: "Harrison Butker", pos: "K", team: "KC", bye: 5, proj: 145, tier: 1, adp: 187.0, rank: 187, health: "CLEAN", note: "Perennial top-tier kicker attached to Patrick Mahomes and Chiefs." },
+        { id: "p188", name: "Cam Little", pos: "K", team: "JAC", bye: 7, proj: 138, tier: 2, adp: 188.2, rank: 188, health: "CLEAN", note: "Massive leg strength with growing field goal opportunities." },
+        { id: "p189", name: "Jake Bates", pos: "K", team: "DET", bye: 6, proj: 143, tier: 2, adp: 189.1, rank: 189, health: "CLEAN", note: "50+ yard specialist attached to high-scoring Lions machine." },
+        { id: "p190", name: "Tyler Loop", pos: "K", team: "BAL", bye: 13, proj: 139, tier: 2, adp: 190.0, rank: 190, health: "CLEAN", note: "Reliable scoring leg in productive Baltimore offense." },
+        { id: "p191", name: "Cairo Santos", pos: "K", team: "CHI", bye: 10, proj: 136, tier: 2, adp: 191.2, rank: 191, health: "CLEAN", note: "Accurate kicker in Chicago's improved offensive system." },
+        { id: "p192", name: "Will Reichard", pos: "K", team: "MIN", bye: 6, proj: 137, tier: 2, adp: 192.1, rank: 192, health: "CLEAN", note: "Steady rookie leg capitalizing on Vikings scoring drives." },
+
+        // --- ROUND 17 (193-204 & DEEP BENCH SLEEPERS) ---
+        { id: "p193", name: "Najee Harris", pos: "RB", team: "NYG", bye: 8, proj: 165, tier: 5, adp: 193.0, rank: 193, health: "CLEAN", note: "Veteran power runner adding veteran backfield depth." },
+        { id: "p194", name: "Brenton Strange", pos: "TE", team: "JAC", bye: 7, proj: 155, tier: 5, adp: 194.2, rank: 194, health: "CLEAN", note: "Ascending tight end in Jacksonville passing scheme." },
+        { id: "p195", name: "Alvin Kamara", pos: "RB", team: "NO", bye: 8, proj: 168, tier: 5, adp: 195.1, rank: 195, health: "RISK", riskReason: "MCL sprain recovery; limited in camp drills with managed practice schedule.", note: "Elite PPR floor when active; managing knee recovery in New Orleans." },
+        { id: "p196", name: "Justice Hill", pos: "RB", team: "BAL", bye: 13, proj: 160, tier: 5, adp: 196.0, rank: 196, health: "CLEAN", note: "Pass-catching satellite back alongside Derrick Henry." },
+        { id: "p197", name: "Ja'Kobi Lane", pos: "WR", team: "BAL", bye: 13, proj: 152, tier: 5, adp: 197.2, rank: 197, health: "CLEAN", note: "Rookie deep threat earning rotational opportunities." },
+        { id: "p198", name: "Jordan Love", pos: "QB", team: "GB", bye: 11, proj: 310, tier: 3, adp: 198.1, rank: 198, health: "CLEAN", note: "Ascending signal caller with deep young weapon set." },
+        { id: "p199", name: "C.J. Stroud", pos: "QB", team: "HOU", bye: 8, proj: 315, tier: 3, adp: 199.0, rank: 199, health: "CLEAN", note: "Elite passing efficiency with deep Texans receiving room." },
+        { id: "p200", name: "Sam Darnold", pos: "QB", team: "SEA", bye: 11, proj: 285, tier: 4, adp: 200.2, rank: 200, health: "CLEAN", note: "Capable veteran distributor surrounded by JSN and Walker." },
+        { id: "p201", name: "Jauan Jennings", pos: "WR", team: "MIN", bye: 6, proj: 158, tier: 5, adp: 201.1, rank: 201, health: "CLEAN", note: "Tough 3rd down possession weapon in Vikings passing game." },
+        { id: "p202", name: "Tank Dell", pos: "WR", team: "HOU", bye: 8, proj: 165, tier: 5, adp: 202.0, rank: 202, health: "CLEAN", note: "Explosive separator and vertical splash threat for Stroud." },
+        { id: "p203", name: "Germie Bernard", pos: "WR", team: "PIT", bye: 9, proj: 150, tier: 5, adp: 203.2, rank: 203, health: "CLEAN", note: "Young rookie receiver earning snaps in Steelers rotation." },
+        { id: "p204", name: "Tre Harris", pos: "WR", team: "LAC", bye: 7, proj: 152, tier: 5, adp: 204.1, rank: 204, health: "CLEAN", note: "Contested-catch boundary receiver for Justin Herbert." }
+      ];
     }
 
     /* --- GLOBAL STATE --- */
@@ -878,6 +830,7 @@
 
     let PLAYER_DATABASE = generateFullESPN300PlayerDatabase();
     let draftedPlayerIds = new Set();
+    let selectedCompareIds = new Set();
     let draftHistory = [];
     let userSlot = 1;
     let currentPosFilter = 'ALL';
@@ -958,13 +911,10 @@
       const pickInRound = (pickIndex % TOTAL_TEAMS) + 1;
       const overallPick = pickIndex + 1;
       
-      // Snake order calculation
       let teamSlot;
       if (round % 2 === 1) {
-        // Odd rounds: 1 to 12
         teamSlot = pickInRound;
       } else {
-        // Even rounds: 12 down to 1
         teamSlot = TOTAL_TEAMS - pickInRound + 1;
       }
       
@@ -1024,11 +974,6 @@
       const available = PLAYER_DATABASE.filter(p => !draftedPlayerIds.has(p.id));
       if (available.length === 0) return null;
 
-      // Assign realistic human drafter archetypes and preferred QB draft windows
-      // Slot 1, 5, 9: Elite QB Hunter (R3-R5)
-      // Slot 2, 6, 10: Mid-Round QB Target (R6-R8)
-      // Slot 3, 7, 11: Late-Round Value QB (R9-R11)
-      // Slot 4, 8, 12: Late Streaming QB (R12-R14)
       const qbWindowByType = {
         'ELITE_QB': { minRd: 3, idealRd: 4 },
         'MID_QB':   { minRd: 6, idealRd: 7 },
@@ -1054,51 +999,38 @@
       const drafterProfile = archetypes[(teamSlot - 1) % archetypes.length];
       const qbWindow = qbWindowByType[drafterProfile.qbPlan];
 
-      // Anti-cluster detection: count QBs drafted in the last 3 picks
       const recentPicks = draftHistory.slice(-3);
       const recentQBsDrafted = recentPicks.filter(h => h.player.pos === 'QB').length;
-
-      // Strict late-round rules for Kickers and DSTs (restricted to final 2 rounds)
       const isLateRoundKickerDstWindow = (currentRound >= 16);
 
       const scoredCandidates = available.map(p => {
-        // Value Over Replacement Player (VORP) calculation
         let vorp = 0;
-        if (p.pos === 'QB') vorp = Math.max(0, p.proj - 280);      // QB replacement: ~280 pts
-        else if (p.pos === 'RB') vorp = Math.max(0, p.proj - 130); // RB replacement: ~130 pts
-        else if (p.pos === 'WR') vorp = Math.max(0, p.proj - 130); // WR replacement: ~130 pts
-        else if (p.pos === 'TE') vorp = Math.max(0, p.proj - 120); // TE replacement: ~120 pts
+        if (p.pos === 'QB') vorp = Math.max(0, p.proj - 280);
+        else if (p.pos === 'RB') vorp = Math.max(0, p.proj - 130);
+        else if (p.pos === 'WR') vorp = Math.max(0, p.proj - 130);
+        else if (p.pos === 'TE') vorp = Math.max(0, p.proj - 120);
         else vorp = 10;
 
-        // Base score anchored on consensus ADP and normalized VORP
         let score = (320 - p.adp) + (vorp * 0.9);
 
-        // --- REALISTIC 1-QB SIMULATION LOGIC ---
         if (p.pos === 'QB') {
           if (currentRound < 3) {
-            score -= 600; // Hard prohibition: No QBs in Rounds 1-2 in 1-QB leagues
+            score -= 600;
           } else if (teamRoster.qbs.length === 0) {
-            // Drafter pacing according to archetype
             if (currentRound < qbWindow.minRd) {
-              // Not yet at this drafter's target window
               score -= 120;
             } else if (currentRound >= qbWindow.minRd && currentRound <= qbWindow.idealRd + 1) {
-              // In the sweet spot window for this drafter
               score += 45;
             }
-
-            // Anti-Cluster throttle: If 2 QBs were just picked, pivot to falling WR/RB
             if (recentQBsDrafted >= 1) {
               score -= (recentQBsDrafted * 55);
             }
           } else {
-            // Already has starting QB: strictly no backup QB until Round 13+
             if (currentRound < 13) score -= 500;
             else score -= 90;
           }
         }
 
-        // --- TIGHT END DISCIPLINE ---
         if (p.pos === 'TE') {
           if (teamRoster.tes.length === 0) {
             if (p.tier === 1 && currentRound >= 2 && currentRound <= 4) {
@@ -1107,13 +1039,11 @@
               score += 25;
             }
           } else {
-            // Already has starting TE: no backup until Round 13+
             if (currentRound < 13) score -= 500;
             else score -= 90;
           }
         }
 
-        // --- RUNNING BACK DISCIPLINE ---
         if (p.pos === 'RB') {
           if (teamRoster.rbs.length === 0) {
             if (drafterProfile.strat === 'HERO_RB' || drafterProfile.strat === 'BALANCED_BPA') score += 55;
@@ -1126,7 +1056,6 @@
           }
         }
 
-        // --- WIDE RECEIVER DISCIPLINE ---
         if (p.pos === 'WR') {
           if (drafterProfile.strat === 'ZERO_RB' || drafterProfile.strat === 'ROBUST_WR') {
             if (teamRoster.wrs.length < 3) score += 50;
@@ -1135,10 +1064,9 @@
           }
         }
 
-        // --- KICKER & DST DISCIPLINE (Rounds 16-17 Only) ---
         if (p.pos === 'K' || p.pos === 'DST') {
           if (!isLateRoundKickerDstWindow) {
-            score -= 900; // Impossible to draft before final 2 rounds
+            score -= 900;
           } else {
             const alreadyHas = (p.pos === 'K' && teamRoster.ks.length > 0) || (p.pos === 'DST' && teamRoster.dsts.length > 0);
             if (alreadyHas) score -= 700;
@@ -1146,7 +1074,6 @@
           }
         }
 
-        // Injury / Inactive penalty
         if (p.health === 'OUT/PUP' || p.health === 'SUSP') score -= 200;
         else if (p.health === 'RISK' && currentRound <= 3) score -= 45;
 
@@ -1173,7 +1100,6 @@
       const isLateRoundKickerDst = (round >= 16);
 
       const scored = available.map(p => {
-        // Compute VORP
         let vorp = 0;
         if (p.pos === 'QB') vorp = Math.max(0, p.proj - 280);
         else if (p.pos === 'RB') vorp = Math.max(0, p.proj - 130);
@@ -1184,17 +1110,15 @@
         let score = (300 - p.adp) + (vorp * 0.95);
         let rationale = 'High Consensus Value';
 
-        // Calculate available rank at position
         let availPosRank = 1;
         if (p.pos === 'QB') availPosRank = remainingQBs.indexOf(p) + 1;
         else if (p.pos === 'RB') availPosRank = remainingRBs.indexOf(p) + 1;
         else if (p.pos === 'WR') availPosRank = remainingWRs.indexOf(p) + 1;
         else if (p.pos === 'TE') availPosRank = remainingTEs.indexOf(p) + 1;
 
-        // Position & Roster-aware weighting
         if (p.pos === 'QB') {
           if (round < 3) {
-            score -= 500; // Prohibit QBs in rounds 1 and 2
+            score -= 500;
             rationale = 'Avoid early QB; elite RB/WR anchors provide superior VORP';
           } else if (myRoster.qbs.length === 0) {
             if (p.tier === 1 && round >= 3 && round <= 5) {
@@ -1257,14 +1181,12 @@
           }
         }
 
-        // ADP differential value bonus
         const adpValueDiff = currentPick.overallPick - p.adp;
         if (adpValueDiff > 3) {
           score += (adpValueDiff * 2.5);
           rationale += ` • Value fall (+${adpValueDiff.toFixed(1)} vs ADP)`;
         }
 
-        // Injury / Risk deduction
         if (p.health === 'OUT/PUP' || p.health === 'SUSP') {
           score -= 180;
         } else if (p.health === 'RISK') {
@@ -1363,6 +1285,7 @@
       recList.innerHTML = recs.map((p, idx) => {
         const badgeColor = getPosColorClass(p.pos);
         const riskAnalysis = getRiskSeverityAnalysis(p, current.overallPick);
+        const isCompared = selectedCompareIds.has(p.id);
 
         let healthBadgeHtml = '';
         if (p.health === 'RISK') {
@@ -1399,9 +1322,15 @@
                   <div class="text-[10px] text-emerald-400 font-semibold mt-0.5">${p.reason}</div>
                 </div>
               </div>
-              <button onclick="window.draftPlayer('${p.id}')" class="px-3 py-1.5 bg-emerald-600 hover:bg-emerald-500 text-white font-bold text-xs rounded-xl shadow-md transition flex items-center gap-1 shrink-0">
-                <i class="fa-solid fa-check text-[10px]"></i> Draft Now
-              </button>
+              <div class="flex items-center gap-1.5 shrink-0">
+                <button onclick="window.toggleComparePlayer('${p.id}')" class="px-2 py-1.5 rounded-xl border ${isCompared ? 'bg-cyan-500/20 text-cyan-300 border-cyan-400 shadow' : 'bg-[#091122] text-slate-400 hover:text-slate-200 border-[#172648]'} text-xs font-bold transition flex items-center gap-1" title="Add to comparison (Max 3)">
+                  <i class="fa-solid fa-scale-balanced text-[10px]"></i>
+                  <span class="hidden sm:inline">${isCompared ? 'Added' : 'Compare'}</span>
+                </button>
+                <button onclick="window.draftPlayer('${p.id}')" class="px-3 py-1.5 bg-emerald-600 hover:bg-emerald-500 text-white font-bold text-xs rounded-xl shadow-md transition flex items-center gap-1 shrink-0">
+                  <i class="fa-solid fa-check text-[10px]"></i> Draft
+                </button>
+              </div>
             </div>
             ${riskBannerHtml}
             <div class="flex items-center justify-between text-[10px] font-mono text-slate-400 bg-[#070e1c] px-2.5 py-1 rounded-lg border border-[#142038]">
@@ -1414,13 +1343,12 @@
         `;
       }).join('');
 
-      // Scarcity text
       if (scarcitySummaryText) {
         const myRoster = getTeamRoster(userSlot);
         if (myRoster.rbs.length === 0 && myRoster.wrs.length === 0) {
           scarcitySummaryText.textContent = "Round 1 Anchor Phase: Prioritize high-touch Tier-1 bellcow RBs or alpha WR1s with clean health profiles.";
         } else if (picksUntil >= 18) {
-          scarcitySummaryText.textContent = `Long snake turn wait (${picksUntil} picks). Anticiapte heavy RB/WR runs before your next pick. Take your highest conviction tier anchor.`;
+          scarcitySummaryText.textContent = `Long snake turn wait (${picksUntil} picks). Anticipate heavy RB/WR runs before your next pick. Take your highest conviction tier anchor.`;
         } else if (myRoster.qbs.length === 0 && current.round >= 4 && current.round <= 7) {
           scarcitySummaryText.textContent = "Elite QB Window: Tier-1 rushing quarterbacks provide substantial weekly positional advantage over the replacement baseline.";
         } else {
@@ -1447,21 +1375,18 @@
       const available = PLAYER_DATABASE.filter(p => !draftedPlayerIds.has(p.id));
       if (countLabel) countLabel.textContent = available.length;
 
-      // Filter by Position
       let filtered = available.filter(p => {
         if (currentPosFilter === 'ALL') return true;
         if (currentPosFilter === 'FLEX') return (p.pos === 'RB' || p.pos === 'WR' || p.pos === 'TE');
         return p.pos === currentPosFilter;
       });
 
-      // Filter by Health
       if (currentHealthFilter === 'CLEAN') {
         filtered = filtered.filter(p => p.health === 'CLEAN');
       } else if (currentHealthFilter === 'RISK') {
         filtered = filtered.filter(p => p.health !== 'CLEAN');
       }
 
-      // Filter by Search text
       if (currentSearchTerm.trim() !== '') {
         const term = currentSearchTerm.toLowerCase();
         filtered = filtered.filter(p => 
@@ -1471,7 +1396,6 @@
         );
       }
 
-      // Sort
       if (currentSortBy === 'ADP') {
         filtered.sort((a, b) => a.adp - b.adp);
       } else if (currentSortBy === 'PROJ') {
@@ -1487,11 +1411,12 @@
         return;
       }
 
-      // Render top 75 of filtered subset for smooth DOM performance
       const renderedSubset = filtered.slice(0, 75);
 
       container.innerHTML = renderedSubset.map(p => {
         const badgeColor = getPosColorClass(p.pos);
+        const isCompared = selectedCompareIds.has(p.id);
+
         let healthBadge = '';
         if (p.health === 'RISK') {
           healthBadge = `<button onclick="window.openRiskModal('${p.id}')" class="bg-amber-500/20 hover:bg-amber-500/30 text-amber-300 text-[9px] font-bold px-1.5 py-0.2 rounded border border-amber-500/30 transition flex items-center gap-1 cursor-pointer" title="Click for injury analysis"><i class="fa-solid fa-triangle-exclamation text-[8px]"></i> RISK</button>`;
@@ -1502,7 +1427,7 @@
         }
 
         return `
-          <div class="bg-[#0b1428] hover:bg-[#0f1c38] border border-[#162444] rounded-xl p-2.5 transition flex items-center justify-between gap-2.5">
+          <div class="bg-[#0b1428] hover:bg-[#0f1c38] border ${isCompared ? 'border-cyan-500/50 bg-cyan-950/10' : 'border-[#162444]'} rounded-xl p-2.5 transition flex items-center justify-between gap-2.5">
             <div class="flex items-center gap-2.5 min-w-0">
               <div class="w-9 h-9 rounded-lg bg-[#060c18] border border-[#142038] flex flex-col items-center justify-center text-center shrink-0">
                 <span class="text-[8px] text-slate-500 font-bold uppercase leading-none">ADP</span>
@@ -1519,11 +1444,15 @@
                 <p class="text-[10px] text-slate-400 truncate mt-0.5">${p.riskReason ? '⚠️ ' + p.riskReason : p.note}</p>
               </div>
             </div>
-            <div class="flex items-center gap-3 shrink-0">
-              <div class="text-right font-mono hidden sm:block">
+            <div class="flex items-center gap-1.5 shrink-0">
+              <div class="text-right font-mono hidden sm:block mr-1">
                 <div class="text-xs font-bold text-slate-200">${p.proj} <span class="text-[9px] text-slate-400 font-sans">pts</span></div>
                 <div class="text-[9px] text-slate-500">Tier ${p.tier}</div>
               </div>
+              <button onclick="window.toggleComparePlayer('${p.id}')" class="px-2 py-1.5 ${isCompared ? 'bg-cyan-500/20 text-cyan-300 border-cyan-400 shadow' : 'bg-[#091122] text-slate-400 hover:text-slate-200 border-[#172648]'} text-xs font-bold rounded-lg border transition flex items-center gap-1" title="Compare player (up to 3)">
+                <i class="fa-solid fa-scale-balanced text-[10px]"></i>
+                <span class="hidden md:inline">${isCompared ? 'Added' : 'Compare'}</span>
+              </button>
               <button onclick="window.draftPlayer('${p.id}')" class="px-2.5 py-1.5 bg-[#122040] hover:bg-emerald-600 hover:text-white text-emerald-400 text-xs font-bold rounded-lg border border-emerald-500/30 transition flex items-center gap-1">
                 <i class="fa-solid fa-plus text-[10px]"></i> Draft
               </button>
@@ -1550,7 +1479,6 @@
         return;
       }
 
-      // Show recent picks in reverse order
       const reversed = [...draftHistory].reverse();
 
       container.innerHTML = reversed.map(item => {
@@ -1584,8 +1512,6 @@
       if (!container) return;
 
       let html = '<table class="w-full text-[10px] border-collapse font-mono">';
-      
-      // Header with 12 Teams
       html += '<thead><tr class="border-b border-[#182645] text-slate-400">';
       html += '<th class="p-1.5 text-left w-10">Rd</th>';
       for (let t = 1; t <= TOTAL_TEAMS; t++) {
@@ -1594,13 +1520,11 @@
       }
       html += '</tr></thead><tbody>';
 
-      // Rows for all 17 rounds
       for (let r = 1; r <= TOTAL_ROUNDS; r++) {
         html += `<tr class="border-b border-[#121c33] hover:bg-[#0c1428]"><td class="p-1.5 font-bold text-slate-500">R${r}</td>`;
         for (let t = 1; t <= TOTAL_TEAMS; t++) {
           const isUser = (t === userSlot);
           
-          // Determine which pick index maps to round r and team t
           let pickInRound;
           if (r % 2 === 1) {
             pickInRound = t;
@@ -1650,7 +1574,6 @@
 
       const drafted = [...myRoster.picks];
       
-      // Slot assignments: 1 QB, 2 RB, 2 WR, 1 TE, 1 FLEX, 1 K, 1 DST, Bench (up to 8)
       let startingQB = null;
       let startingRBs = [];
       let startingWRs = [];
@@ -1662,39 +1585,31 @@
 
       const remainingPool = [...drafted];
 
-      // Assign QB
       const qbIdx = remainingPool.findIndex(p => p.pos === 'QB');
       if (qbIdx !== -1) startingQB = remainingPool.splice(qbIdx, 1)[0];
 
-      // Assign RBs (up to 2)
       for (let i = 0; i < 2; i++) {
         const rbIdx = remainingPool.findIndex(p => p.pos === 'RB');
         if (rbIdx !== -1) startingRBs.push(remainingPool.splice(rbIdx, 1)[0]);
       }
 
-      // Assign WRs (up to 2)
       for (let i = 0; i < 2; i++) {
         const wrIdx = remainingPool.findIndex(p => p.pos === 'WR');
         if (wrIdx !== -1) startingWRs.push(remainingPool.splice(wrIdx, 1)[0]);
       }
 
-      // Assign TE
       const teIdx = remainingPool.findIndex(p => p.pos === 'TE');
       if (teIdx !== -1) startingTE = remainingPool.splice(teIdx, 1)[0];
 
-      // Assign FLEX (RB, WR, or TE)
       const flexIdx = remainingPool.findIndex(p => p.pos === 'RB' || p.pos === 'WR' || p.pos === 'TE');
       if (flexIdx !== -1) startingFLEX = remainingPool.splice(flexIdx, 1)[0];
 
-      // Assign K
       const kIdx = remainingPool.findIndex(p => p.pos === 'K');
       if (kIdx !== -1) startingK = remainingPool.splice(kIdx, 1)[0];
 
-      // Assign DST
       const dstIdx = remainingPool.findIndex(p => p.pos === 'DST');
       if (dstIdx !== -1) startingDST = remainingPool.splice(dstIdx, 1)[0];
 
-      // Rest are Bench
       bench = remainingPool;
 
       function renderSlot(slotName, player) {
@@ -1840,7 +1755,7 @@
       while (getCurrentPickIndex() < TOTAL_PICKS && loopCount < TOTAL_PICKS) {
         const details = getPickDetails(getCurrentPickIndex());
         if (details.teamSlot === userSlot) {
-          break; // Stop at user's turn
+          break;
         }
         const choice = getAiDraftChoice(details.teamSlot, getCurrentPickIndex());
         if (choice) {
@@ -2013,7 +1928,7 @@
         <div class="p-8 text-center space-y-3">
           <div class="w-10 h-10 border-2 border-cyan-500 border-t-transparent rounded-full animate-spin mx-auto"></div>
           <p class="text-xs text-slate-300 font-bold">Synthesizing live draft dynamics with Gemini 3 Flash...</p>
-          <p class="text-[11px] text-slate-500">Evaluating 400 player pool, current roster composition, and turn risks...</p>
+          <p class="text-[11px] text-slate-500">Evaluating 300 player pool, current roster composition, and turn risks...</p>
         </div>
       `;
 
@@ -2049,7 +1964,6 @@ Provide a high-impact, 3-section fantasy advisor diagnosis:
         }
 
         if (!aiText) {
-          // Heuristic fallback
           const topTarget = topRecs[0] || { name: 'BPA Starter', pos: 'RB', team: 'NFL', proj: 260 };
           aiText = `### 🎯 Primary Recommendation for Pick #${current.overallPick}
 **Target: ${topTarget.name} (${topTarget.pos}, ${topTarget.team})**
@@ -2202,6 +2116,223 @@ Provide a high-impact, 3-section fantasy advisor diagnosis:
       renderPlayerPool();
     }
 
+    /* --- COMPARISON MODULE CONTROLLERS --- */
+    function toggleComparePlayer(playerId) {
+      if (selectedCompareIds.has(playerId)) {
+        selectedCompareIds.delete(playerId);
+      } else {
+        if (selectedCompareIds.size >= 3) {
+          const firstAdded = selectedCompareIds.values().next().value;
+          selectedCompareIds.delete(firstAdded);
+        }
+        selectedCompareIds.add(playerId);
+      }
+      renderCompareTray();
+      renderAdvisor();
+      renderPlayerPool();
+    }
+
+    function clearCompare() {
+      selectedCompareIds.clear();
+      renderCompareTray();
+      renderAdvisor();
+      renderPlayerPool();
+      closeCompareModal();
+    }
+
+    function renderCompareTray() {
+      const tray = document.getElementById('compareTray');
+      const countLabel = document.getElementById('compareCountLabel');
+      const summaryLabel = document.getElementById('comparePlayerNamesSummary');
+      if (!tray) return;
+
+      if (selectedCompareIds.size === 0) {
+        tray.classList.add('hidden');
+        tray.classList.remove('flex');
+        return;
+      }
+
+      tray.classList.remove('hidden');
+      tray.classList.add('flex');
+
+      if (countLabel) countLabel.textContent = selectedCompareIds.size;
+      if (summaryLabel) {
+        const names = Array.from(selectedCompareIds).map(id => {
+          const p = PLAYER_DATABASE.find(x => x.id === id);
+          return p ? p.name : '';
+        }).filter(Boolean);
+        summaryLabel.textContent = names.join(' vs ');
+      }
+    }
+
+    function openCompareModal() {
+      if (selectedCompareIds.size === 0) return;
+      const modal = document.getElementById('compareModal');
+      const container = document.getElementById('compareModalContent');
+      if (!modal || !container) return;
+
+      const currentPick = getPickDetails(getCurrentPickIndex());
+      const picksUntilNextTurn = getPicksUntilUserTurn();
+      const myRoster = getTeamRoster(userSlot);
+
+      const comparedPlayers = Array.from(selectedCompareIds)
+        .map(id => PLAYER_DATABASE.find(p => p.id === id))
+        .filter(Boolean);
+
+      if (comparedPlayers.length === 0) return;
+
+      const evaluations = comparedPlayers.map(p => {
+        let needScore = 50;
+        let needDescription = 'Bench / Depth';
+        
+        if (p.pos === 'QB') {
+          if (myRoster.qbs.length === 0) {
+            needScore = currentPick.round >= 3 ? 90 : 30;
+            needDescription = currentPick.round >= 3 ? 'Starting QB1' : 'QB1 (Early)';
+          } else {
+            needScore = 20;
+            needDescription = 'Backup QB';
+          }
+        } else if (p.pos === 'RB') {
+          if (myRoster.rbs.length === 0) { needScore = 100; needDescription = 'Starting RB1 Anchor'; }
+          else if (myRoster.rbs.length === 1) { needScore = 92; needDescription = 'Starting RB2 Starter'; }
+          else if (myRoster.rbs.length === 2) { needScore = 78; needDescription = 'Starting FLEX Option'; }
+          else { needScore = 55; needDescription = 'High-Touch RB Depth'; }
+        } else if (p.pos === 'WR') {
+          if (myRoster.wrs.length === 0) { needScore = 100; needDescription = 'Starting WR1 Alpha'; }
+          else if (myRoster.wrs.length === 1) { needScore = 92; needDescription = 'Starting WR2 Starter'; }
+          else if (myRoster.wrs.length === 2) { needScore = 80; needDescription = 'Starting FLEX Option'; }
+          else { needScore = 55; needDescription = 'WR Target Depth'; }
+        } else if (p.pos === 'TE') {
+          if (myRoster.tes.length === 0) {
+            needScore = (p.tier <= 2 && currentPick.round >= 2) ? 90 : 75;
+            needDescription = 'Starting TE1';
+          } else {
+            needScore = 20;
+            needDescription = 'Backup TE';
+          }
+        } else if (p.pos === 'K' || p.pos === 'DST') {
+          needScore = currentPick.round >= 16 ? 85 : 5;
+          needDescription = currentPick.round >= 16 ? `Starting ${p.pos}` : `Pre-mature ${p.pos}`;
+        }
+
+        const adpGap = p.adp - (currentPick.overallPick + picksUntilNextTurn);
+        let survivalOdds = Math.max(5, Math.min(95, Math.round(50 + (adpGap * 4.5))));
+        if (p.adp < currentPick.overallPick) survivalOdds = 10;
+
+        const valueDiff = (currentPick.overallPick - p.adp);
+        let totalScore = needScore + (p.proj * 0.15) + (valueDiff * 1.8);
+        if (p.health === 'RISK') totalScore -= 10;
+        if (p.health === 'SUSP' || p.health === 'OUT/PUP') totalScore -= 30;
+
+        return {
+          player: p,
+          needScore,
+          needDescription,
+          survivalOdds,
+          valueDiff: valueDiff.toFixed(1),
+          totalScore,
+          risk: getRiskSeverityAnalysis(p, currentPick.overallPick)
+        };
+      });
+
+      evaluations.sort((a, b) => b.totalScore - a.totalScore);
+      const winner = evaluations[0];
+
+      let tableHtml = `
+        <div class="p-3.5 rounded-2xl bg-gradient-to-r from-emerald-950/60 via-[#0c1830] to-cyan-950/60 border border-emerald-500/40 space-y-2">
+          <div class="flex items-center justify-between flex-wrap gap-2">
+            <div class="flex items-center gap-2">
+              <span class="px-2 py-0.5 rounded-md bg-emerald-500 text-slate-950 font-black text-xs font-mono uppercase">Top Pick</span>
+              <span class="font-extrabold text-sm text-slate-100">${winner.player.name} (${winner.player.pos} • ${winner.player.team})</span>
+            </div>
+            <button onclick="window.draftPlayer('${winner.player.id}'); window.clearCompare();" class="px-3 py-1.5 bg-emerald-600 hover:bg-emerald-500 text-white font-bold text-xs rounded-xl shadow transition flex items-center gap-1.5">
+              <i class="fa-solid fa-check"></i> Draft Winner Now
+            </button>
+          </div>
+          <p class="text-xs text-slate-300 leading-relaxed">
+            <strong>Advisor Rationale:</strong> At Pick #${currentPick.overallPick}, <strong>${winner.player.name}</strong> maximizes starting lineup value (${winner.needDescription}) with <strong>${winner.player.proj} projected points</strong>. With only <strong>${winner.survivalOdds}% survival odds</strong> before your next turn in ${picksUntilNextTurn} picks, drafting ${winner.player.name} now prevents a positional snipe.
+          </p>
+        </div>
+
+        <div class="grid grid-cols-1 ${evaluations.length === 2 ? 'sm:grid-cols-2' : evaluations.length === 3 ? 'sm:grid-cols-3' : ''} gap-3">
+      `;
+
+      evaluations.forEach((item, idx) => {
+        const isTop = (idx === 0);
+        const p = item.player;
+        const badgeColor = getPosColorClass(p.pos);
+
+        tableHtml += `
+          <div class="p-3.5 rounded-2xl bg-[#080f1e] border ${isTop ? 'border-emerald-500/50 bg-emerald-950/10 ring-1 ring-emerald-500/30' : 'border-[#172545]'} flex flex-col justify-between gap-3">
+            <div>
+              <div class="flex items-start justify-between gap-2 pb-2 border-b border-[#142038]">
+                <div>
+                  <div class="font-extrabold text-xs text-slate-100 flex items-center gap-1.5">
+                    <span>${p.name}</span>
+                    ${isTop ? '<span class="text-[9px] text-emerald-400 font-mono font-bold bg-emerald-500/20 px-1 rounded">#1 CHOICE</span>' : ''}
+                  </div>
+                  <div class="text-[10px] text-slate-400 mt-0.5">${p.team} • Bye Wk ${p.bye}</div>
+                </div>
+                <span class="text-[9px] font-bold px-1.5 py-0.5 rounded border ${badgeColor}">${p.pos}</span>
+              </div>
+
+              <div class="space-y-2 pt-2.5 text-xs">
+                <div class="flex justify-between items-center text-[11px]">
+                  <span class="text-slate-400">Roster Role:</span>
+                  <span class="font-bold text-slate-200">${item.needDescription}</span>
+                </div>
+                <div class="flex justify-between items-center text-[11px]">
+                  <span class="text-slate-400">Consensus ADP:</span>
+                  <span class="font-mono font-bold text-slate-200">#${p.adp}</span>
+                </div>
+                <div class="flex justify-between items-center text-[11px]">
+                  <span class="text-slate-400">Projected Pts:</span>
+                  <span class="font-mono font-bold text-emerald-400">${p.proj} pts</span>
+                </div>
+                <div class="flex justify-between items-center text-[11px]">
+                  <span class="text-slate-400">Next Turn Survival:</span>
+                  <span class="font-mono font-bold ${item.survivalOdds < 35 ? 'text-rose-400' : 'text-amber-400'}">${item.survivalOdds}%</span>
+                </div>
+                <div class="flex justify-between items-center text-[11px]">
+                  <span class="text-slate-400">ADP Value Diff:</span>
+                  <span class="font-mono font-bold ${parseFloat(item.valueDiff) >= 0 ? 'text-emerald-400' : 'text-slate-400'}">${parseFloat(item.valueDiff) >= 0 ? '+' : ''}${item.valueDiff}</span>
+                </div>
+
+                ${item.risk ? `
+                  <div class="p-1.5 rounded-lg border text-[10px] ${item.risk.severityClass} mt-1">
+                    <strong>⚠️ ${item.risk.severity}:</strong> ${item.risk.reason}
+                  </div>
+                ` : `
+                  <div class="p-1.5 rounded-lg border text-[10px] text-emerald-400 bg-emerald-500/10 border-emerald-500/20 mt-1">
+                    <i class="fa-solid fa-circle-check"></i> Clean Health &amp; Availability Profile
+                  </div>
+                `}
+              </div>
+            </div>
+
+            <button onclick="window.draftPlayer('${p.id}'); window.clearCompare();" class="w-full py-2 bg-[#122040] hover:bg-emerald-600 text-slate-200 hover:text-white font-bold text-xs rounded-xl border border-[#1b2f5c] transition flex items-center justify-center gap-1.5">
+              <i class="fa-solid fa-check text-[10px]"></i> Draft ${p.name.split(' ').pop()}
+            </button>
+          </div>
+        `;
+      });
+
+      tableHtml += `</div>`;
+      container.innerHTML = tableHtml;
+
+      modal.classList.remove('hidden');
+      modal.classList.add('flex');
+    }
+
+    function closeCompareModal() {
+      const modal = document.getElementById('compareModal');
+      if (modal) {
+        modal.classList.add('hidden');
+        modal.classList.remove('flex');
+      }
+    }
+
     /* --- GLOBAL WINDOW BINDINGS --- */
     window.draftPlayer = draftPlayer;
     window.undoLastPick = undoLastPick;
@@ -2225,10 +2356,16 @@ Provide a high-impact, 3-section fantasy advisor diagnosis:
     window.setPosFilter = setPosFilter;
     window.toggleHealthFilter = toggleHealthFilter;
     window.handleSearchFilterChange = handleSearchFilterChange;
+    window.toggleComparePlayer = toggleComparePlayer;
+    window.clearCompare = clearCompare;
+    window.openCompareModal = openCompareModal;
+    window.closeCompareModal = closeCompareModal;
+    window.renderCompareTray = renderCompareTray;
 
     /* Bootstrap Application */
     window.addEventListener('DOMContentLoaded', () => {
       updateAllUI();
+      renderCompareTray();
     });
   </script>
 </body>
