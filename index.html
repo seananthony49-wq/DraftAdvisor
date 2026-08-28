@@ -1,0 +1,2235 @@
+<!DOCTYPE html>
+<html lang="en" class="dark">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>DraftIQ Live Advisor - 2026 Fantasy Draft Intelligence</title>
+  
+  <!-- Tailwind CSS -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  <!-- FontAwesome Icons -->
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+  <!-- Google Fonts: Inter & JetBrains Mono -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&family=JetBrains+Mono:wght@400;600;700;800&display=swap" rel="stylesheet">
+
+  <script>
+    tailwind.config = {
+      darkMode: 'class',
+      theme: {
+        extend: {
+          fontFamily: {
+            sans: ['Inter', 'sans-serif'],
+            mono: ['JetBrains Mono', 'monospace'],
+          },
+          colors: {
+            navy: {
+              950: '#060a14',
+              900: '#0a1020',
+              850: '#0d152a',
+              800: '#121d38',
+              700: '#1b2a4e',
+              600: '#263b6d',
+            },
+            accent: {
+              emerald: '#10b981',
+              cyan: '#06b6d4',
+              violet: '#8b5cf6',
+              amber: '#f59e0b',
+              rose: '#f43f5e'
+            }
+          }
+        }
+      }
+    }
+  </script>
+
+  <style>
+    * {
+      box-sizing: border-box;
+    }
+    body {
+      background-color: #060a14;
+      color: #e2e8f0;
+      font-family: 'Inter', sans-serif;
+    }
+    /* Custom Sleek Scrollbar */
+    ::-webkit-scrollbar {
+      width: 6px;
+      height: 6px;
+    }
+    ::-webkit-scrollbar-track {
+      background: #091020;
+    }
+    ::-webkit-scrollbar-thumb {
+      background: #1b2a4e;
+      border-radius: 9999px;
+    }
+    ::-webkit-scrollbar-thumb:hover {
+      background: #2a4073;
+    }
+    .custom-scrollbar {
+      scrollbar-width: thin;
+      scrollbar-color: #1b2a4e #091020;
+    }
+    .glow-cyan {
+      box-shadow: 0 0 20px -3px rgba(6, 182, 212, 0.25);
+    }
+    .glow-emerald {
+      box-shadow: 0 0 20px -3px rgba(16, 185, 129, 0.25);
+    }
+    .glow-pulse {
+      animation: pulseGlow 2s infinite;
+    }
+    @keyframes pulseGlow {
+      0%, 100% { box-shadow: 0 0 15px 0px rgba(16, 185, 129, 0.35); }
+      50% { box-shadow: 0 0 25px 4px rgba(6, 182, 212, 0.55); }
+    }
+  </style>
+</head>
+
+<body class="min-h-screen flex flex-col bg-[#060a14] text-slate-100 antialiased selection:bg-cyan-500 selection:text-white">
+
+  <!-- Top Navigation / Clock Banner -->
+  <header class="sticky top-0 z-40 bg-[#080e1d]/95 backdrop-blur-md border-b border-[#15223e] px-3 py-2.5 sm:px-6">
+    <div class="max-w-[1700px] mx-auto flex flex-wrap items-center justify-between gap-3">
+      
+      <!-- Brand & Status -->
+      <div class="flex items-center gap-3">
+        <div class="flex items-center gap-2">
+          <div class="w-8 h-8 rounded-xl bg-gradient-to-br from-emerald-500 to-cyan-500 flex items-center justify-center text-white shadow-lg shadow-emerald-500/20">
+            <i class="fa-solid fa-football text-sm"></i>
+          </div>
+          <div>
+            <div class="flex items-center gap-1.5">
+              <span class="font-extrabold text-sm sm:text-base tracking-tight text-white font-mono">DraftIQ</span>
+              <span class="text-[10px] font-extrabold uppercase px-1.5 py-0.2 rounded bg-emerald-500/20 text-emerald-400 border border-emerald-500/30">Live Advisor</span>
+            </div>
+            <p class="text-[10px] text-slate-400 font-medium hidden sm:block">12-Team Snake Draft Intelligence Engine • 2026</p>
+          </div>
+        </div>
+      </div>
+
+      <!-- Live Clock Pill Banner -->
+      <div id="topClockBanner" class="flex items-center gap-2.5 px-3.5 py-1.5 rounded-full bg-[#0d172e] border border-[#1e3056] shadow-inner text-xs font-mono">
+        <span class="text-slate-400 flex items-center gap-1.5">
+          <i class="fa-regular fa-clock text-cyan-400"></i>
+          <span id="currentPickLabel" class="text-slate-200 font-bold">Round 1, Pick 1 (1.01)</span>
+        </span>
+        <span class="text-slate-600">|</span>
+        <span class="text-slate-400 flex items-center gap-1.5">
+          <span>On The Clock:</span>
+          <span id="currentTeamLabel" class="text-cyan-300 font-black">Team 1</span>
+        </span>
+        <span id="onTheClockBadge" class="hidden text-[10px] font-black uppercase px-2 py-0.5 rounded-full bg-emerald-500 text-slate-950 glow-pulse items-center gap-1">
+          <i class="fa-solid fa-bell"></i> YOUR TURN
+        </span>
+      </div>
+
+      <!-- Draft Controls & Action Buttons -->
+      <div class="flex items-center gap-1.5 sm:gap-2">
+        <button onclick="window.undoLastPick()" class="px-2.5 py-1.5 rounded-xl bg-[#0e1933] hover:bg-[#16254a] border border-[#1e3056] text-slate-300 text-xs font-bold transition flex items-center gap-1.5" title="Undo Last Pick">
+          <i class="fa-solid fa-rotate-left text-[11px]"></i>
+          <span class="hidden md:inline">Undo</span>
+        </button>
+        <button onclick="window.simulateNextPick()" class="px-2.5 py-1.5 rounded-xl bg-[#0e1933] hover:bg-[#16254a] border border-[#1e3056] text-slate-300 text-xs font-bold transition flex items-center gap-1.5" title="Simulate Next Pick">
+          <i class="fa-solid fa-forward-step text-[11px] text-cyan-400"></i>
+          <span class="hidden md:inline">Sim Pick</span>
+        </button>
+        <button onclick="window.simulateToMyTurn()" class="px-3 py-1.5 rounded-xl bg-gradient-to-r from-cyan-600 to-emerald-600 hover:from-cyan-500 hover:to-emerald-500 text-white text-xs font-black shadow-md shadow-cyan-900/30 transition flex items-center gap-1.5">
+          <i class="fa-solid fa-forward-fast text-[11px]"></i>
+          <span>Sim to My Turn</span>
+        </button>
+        <button onclick="window.openOpponentsModal()" class="p-2 rounded-xl bg-[#0e1933] hover:bg-[#16254a] border border-[#1e3056] text-slate-300 text-xs transition" title="View Opponent Rosters">
+          <i class="fa-solid fa-users text-slate-300"></i>
+        </button>
+        <button onclick="window.openSettingsModal()" class="p-2 rounded-xl bg-[#0e1933] hover:bg-[#16254a] border border-[#1e3056] text-slate-300 text-xs transition" title="Draft Settings & Position">
+          <i class="fa-solid fa-gear text-slate-300"></i>
+        </button>
+        <button onclick="window.openResetModal()" class="p-2 rounded-xl bg-[#0e1933] hover:bg-rose-900/40 border border-rose-500/30 text-rose-400 text-xs transition" title="Reset Draft">
+          <i class="fa-solid fa-arrows-rotate"></i>
+        </button>
+      </div>
+
+    </div>
+  </header>
+
+  <!-- Mobile View Switcher Tabs (sm screens only) -->
+  <div class="lg:hidden bg-[#0a1124] border-b border-[#162340] px-3 py-2 flex items-center justify-around text-xs font-bold">
+    <button onclick="window.switchMobileTab('advisor')" id="mTab-advisor" class="px-3 py-1.5 rounded-lg bg-emerald-500/20 text-emerald-400 border border-emerald-500/30 flex items-center gap-1">
+      <i class="fa-solid fa-crosshairs"></i> Advisor
+    </button>
+    <button onclick="window.switchMobileTab('players')" id="mTab-players" class="px-3 py-1.5 rounded-lg text-slate-400 hover:text-slate-200 flex items-center gap-1">
+      <i class="fa-solid fa-list"></i> Players
+    </button>
+    <button onclick="window.switchMobileTab('board')" id="mTab-board" class="px-3 py-1.5 rounded-lg text-slate-400 hover:text-slate-200 flex items-center gap-1">
+      <i class="fa-solid fa-table-cells"></i> Board
+    </button>
+    <button onclick="window.switchMobileTab('roster')" id="mTab-roster" class="px-3 py-1.5 rounded-lg text-slate-400 hover:text-slate-200 flex items-center gap-1">
+      <i class="fa-solid fa-shield-halved"></i> Roster
+    </button>
+  </div>
+
+  <!-- Main Grid Workspace -->
+  <main class="flex-1 max-w-[1700px] w-full mx-auto p-3 sm:p-4 grid grid-cols-1 lg:grid-cols-12 gap-4">
+
+    <!-- ========================================== -->
+    <!-- LEFT COLUMN (3 cols): Advisor & Targets    -->
+    <!-- ========================================== -->
+    <aside id="panel-advisor" class="lg:col-span-3 flex flex-col gap-3.5">
+      
+      <!-- Panel Mode Switcher (Advisor vs My Roster) -->
+      <div class="p-1 rounded-xl bg-[#091122] border border-[#162444] flex items-center gap-1 text-xs font-bold">
+        <button onclick="window.switchLeftTab('advisor')" id="leftTabAdvisorBtn" class="flex-1 py-1.5 rounded-lg bg-emerald-600/90 text-white shadow transition flex items-center justify-center gap-1.5">
+          <i class="fa-solid fa-crosshairs"></i> Advisor &amp; Targets
+        </button>
+        <button onclick="window.switchLeftTab('roster')" id="leftTabRosterBtn" class="flex-1 py-1.5 rounded-lg text-slate-400 hover:text-slate-200 hover:bg-[#121f3b] transition flex items-center justify-center gap-1.5">
+          <i class="fa-solid fa-shield-halved"></i> My Roster (<span id="myRosterCount">0</span>/17)
+        </button>
+      </div>
+
+      <!-- LEFT TAB 1: Live Advisor View -->
+      <div id="leftAdvisorContent" class="flex flex-col gap-3.5">
+        
+        <!-- AI Strategic Oracle Card -->
+        <div class="rounded-2xl p-3.5 bg-gradient-to-br from-[#0e1b38] via-[#091328] to-[#070e1c] border border-cyan-500/30 glow-cyan relative overflow-hidden">
+          <div class="flex items-center justify-between mb-2">
+            <div class="flex items-center gap-1.5">
+              <div class="w-6 h-6 rounded-lg bg-cyan-500/20 text-cyan-400 flex items-center justify-center text-xs">
+                <i class="fa-solid fa-wand-magic-sparkles"></i>
+              </div>
+              <span class="text-xs font-black uppercase tracking-wider text-cyan-300">AI Strategic Oracle</span>
+            </div>
+            <span class="text-[9px] font-mono px-1.5 py-0.2 rounded bg-cyan-950 text-cyan-400 border border-cyan-700/40">Gemini 3 Flash</span>
+          </div>
+          <p class="text-[11px] text-slate-300 leading-relaxed mb-3">
+            Real-time multi-round run predictions, custom roster synergy, and opportunity-cost diagnostics.
+          </p>
+          <button onclick="window.requestAiAnalysis()" class="w-full py-2 px-3 rounded-xl bg-gradient-to-r from-cyan-600 to-emerald-600 hover:from-cyan-500 hover:to-emerald-500 text-white font-bold text-xs shadow-lg shadow-cyan-950 transition flex items-center justify-center gap-2">
+            <i class="fa-solid fa-microchip"></i>
+            <span>Analyze Live Draft State</span>
+          </button>
+        </div>
+
+        <!-- Recommended Targets Header & Next Turn Indicator -->
+        <div class="flex items-center justify-between">
+          <div class="flex items-center gap-1.5">
+            <i class="fa-solid fa-bullseye text-emerald-400 text-xs"></i>
+            <span class="text-xs font-black uppercase tracking-wider text-slate-200">Recommended Targets</span>
+          </div>
+          <span id="nextTurnPill" class="text-[10px] font-mono font-bold px-2 py-0.5 rounded-full bg-slate-900 border border-slate-700 text-slate-300">
+            Next turn in: 0 picks
+          </span>
+        </div>
+
+        <!-- Dynamic Recommendations List Container -->
+        <div id="recommendationsList" class="flex flex-col gap-2.5">
+          <!-- Populated dynamically via JS -->
+        </div>
+
+        <!-- Positional Scarcity & Cliff Alert Box -->
+        <div id="scarcityAlertCard" class="rounded-2xl p-3 bg-[#0a1224] border border-[#1a2b4d] text-xs space-y-1.5">
+          <div class="flex items-center gap-1.5 text-amber-400 font-bold text-[11px]">
+            <i class="fa-solid fa-chart-line"></i>
+            <span>Positional Run &amp; Cliff Watch</span>
+          </div>
+          <p id="scarcitySummaryText" class="text-[11px] text-slate-300 leading-snug">
+            Evaluating draft momentum and tier cliffs before your next snake turn...
+          </p>
+          <div id="scarcityPills" class="flex items-center gap-1.5 pt-1 text-[10px] font-mono font-bold">
+            <!-- Dynamically populated -->
+          </div>
+        </div>
+
+      </div>
+
+      <!-- LEFT TAB 2: User Roster View -->
+      <div id="leftRosterContent" class="hidden flex-col gap-3">
+        <div class="p-3 bg-[#0a1224] rounded-2xl border border-[#172648] space-y-2">
+          <div class="flex items-center justify-between text-xs font-bold text-slate-200 border-b border-[#172648] pb-2">
+            <span class="flex items-center gap-1.5"><i class="fa-solid fa-list-check text-cyan-400"></i> Active Starting Lineup</span>
+            <span class="text-[10px] text-slate-400 font-mono" id="starterPointsSummary">Proj: 0.0 pts</span>
+          </div>
+          <div id="userStartingLineupList" class="space-y-1.5 text-xs">
+            <!-- Lineup slots populated by JS -->
+          </div>
+        </div>
+
+        <div class="p-3 bg-[#0a1224] rounded-2xl border border-[#172648] space-y-2">
+          <div class="text-xs font-bold text-slate-200 border-b border-[#172648] pb-2 flex items-center justify-between">
+            <span class="flex items-center gap-1.5"><i class="fa-solid fa-chair text-slate-400"></i> Bench Reserves</span>
+            <span class="text-[10px] text-slate-400 font-mono" id="benchCountSummary">0 / 10 slots</span>
+          </div>
+          <div id="userBenchList" class="space-y-1.5 text-xs">
+            <!-- Bench slots populated by JS -->
+          </div>
+        </div>
+      </div>
+
+    </aside>
+
+    <!-- ========================================== -->
+    <!-- CENTER COLUMN (5 cols): Player Database    -->
+    <!-- ========================================== -->
+    <section id="panel-players" class="lg:col-span-5 flex flex-col gap-3">
+      
+      <!-- Search & Sorting Toolbar -->
+      <div class="p-3 rounded-2xl bg-[#091122] border border-[#162444] space-y-2.5">
+        
+        <!-- Search bar + Sort selector -->
+        <div class="flex items-center gap-2">
+          <div class="relative flex-1">
+            <i class="fa-solid fa-magnifying-glass absolute left-3 top-1/2 -translate-y-1/2 text-slate-500 text-xs"></i>
+            <input 
+              type="text" 
+              id="playerSearchInput" 
+              placeholder="Search 400 players by name, team, position..."
+              oninput="window.handleSearchFilterChange()"
+              class="w-full pl-8 pr-3 py-2 rounded-xl bg-[#060c18] border border-[#1a2a4c] text-xs text-slate-100 placeholder-slate-500 focus:outline-none focus:border-cyan-500 focus:ring-1 focus:ring-cyan-500 transition"
+            >
+          </div>
+          <div class="flex items-center gap-1.5 shrink-0">
+            <label for="sortBySelect" class="text-[10px] text-slate-400 font-bold hidden sm:inline">Sort:</label>
+            <select 
+              id="sortBySelect" 
+              onchange="window.handleSearchFilterChange()"
+              class="bg-[#060c18] border border-[#1a2a4c] text-xs text-slate-200 font-bold rounded-xl px-2.5 py-2 focus:outline-none focus:border-cyan-500"
+            >
+              <option value="ADP">Sort: Consensus ADP</option>
+              <option value="PROJ">Sort: Projected Pts</option>
+              <option value="RANK">Sort: Consensus Rank</option>
+              <option value="TIER">Sort: Positional Tier</option>
+            </select>
+          </div>
+        </div>
+
+        <!-- Position Pills + Health Filter Toggle -->
+        <div class="flex flex-wrap items-center justify-between gap-1.5 pt-0.5">
+          <div class="flex flex-wrap items-center gap-1" id="positionFilterGroup">
+            <button onclick="window.setPosFilter('ALL')" data-pos="ALL" class="pos-filter-btn active px-2.5 py-1 rounded-lg bg-emerald-500 text-slate-950 font-black text-xs transition">ALL</button>
+            <button onclick="window.setPosFilter('QB')" data-pos="QB" class="pos-filter-btn px-2 py-1 rounded-lg bg-[#0e1933] text-rose-400 hover:bg-[#16254b] font-bold text-xs transition">QB</button>
+            <button onclick="window.setPosFilter('RB')" data-pos="RB" class="pos-filter-btn px-2 py-1 rounded-lg bg-[#0e1933] text-emerald-400 hover:bg-[#16254b] font-bold text-xs transition">RB</button>
+            <button onclick="window.setPosFilter('WR')" data-pos="WR" class="pos-filter-btn px-2 py-1 rounded-lg bg-[#0e1933] text-cyan-400 hover:bg-[#16254b] font-bold text-xs transition">WR</button>
+            <button onclick="window.setPosFilter('TE')" data-pos="TE" class="pos-filter-btn px-2 py-1 rounded-lg bg-[#0e1933] text-amber-400 hover:bg-[#16254b] font-bold text-xs transition">TE</button>
+            <button onclick="window.setPosFilter('FLEX')" data-pos="FLEX" class="pos-filter-btn px-2 py-1 rounded-lg bg-[#0e1933] text-indigo-400 hover:bg-[#16254b] font-bold text-xs transition">FLEX</button>
+            <button onclick="window.setPosFilter('K')" data-pos="K" class="pos-filter-btn px-2 py-1 rounded-lg bg-[#0e1933] text-purple-400 hover:bg-[#16254b] font-bold text-xs transition">K</button>
+            <button onclick="window.setPosFilter('DST')" data-pos="DST" class="pos-filter-btn px-2 py-1 rounded-lg bg-[#0e1933] text-blue-400 hover:bg-[#16254b] font-bold text-xs transition">DST</button>
+          </div>
+
+          <!-- Health Status Filter -->
+          <button onclick="window.toggleHealthFilter()" id="healthFilterBtn" class="px-2 py-1 rounded-lg bg-[#0e1933] border border-[#1e3056] text-[10px] font-bold text-slate-300 hover:text-white transition flex items-center gap-1">
+            <i class="fa-solid fa-heart-pulse text-rose-400"></i>
+            <span id="healthFilterLabel">Health: All</span>
+          </button>
+        </div>
+
+      </div>
+
+      <!-- Player Count & Summary Bar -->
+      <div class="flex items-center justify-between px-1 text-[11px] font-mono text-slate-400">
+        <span>Available Players (<span id="availablePlayerCount" class="text-slate-200 font-bold">400</span> remaining)</span>
+        <span class="text-[10px] text-slate-500">Click RISK badges for detailed diagnosis</span>
+      </div>
+
+      <!-- Scrollable Player Pool List -->
+      <div id="playerPoolList" class="flex-1 overflow-y-auto max-h-[calc(100vh-230px)] space-y-2 pr-1 custom-scrollbar">
+        <!-- Rendered dynamically by JS -->
+      </div>
+
+    </section>
+
+    <!-- ========================================== -->
+    <!-- RIGHT COLUMN (4 cols): Board & Stream      -->
+    <!-- ========================================== -->
+    <section id="panel-board" class="lg:col-span-4 flex flex-col gap-3">
+      
+      <!-- Board Header & View Switcher -->
+      <div class="p-3 rounded-2xl bg-[#091122] border border-[#162444] flex items-center justify-between">
+        <div class="flex items-center gap-2">
+          <i class="fa-solid fa-table-list text-cyan-400"></i>
+          <span class="font-bold text-xs uppercase tracking-wider text-slate-200">Live Draft Board</span>
+          <span class="text-[10px] font-mono text-slate-500">(<span id="totalPicksCount">0</span>/204)</span>
+        </div>
+        <div class="flex items-center gap-1 p-0.5 rounded-lg bg-[#060c18] border border-[#162444] text-[11px] font-bold">
+          <button onclick="window.switchBoardView('stream')" id="viewStreamBtn" class="px-2.5 py-1 rounded-md bg-cyan-600 text-white shadow transition">
+            Stream
+          </button>
+          <button onclick="window.switchBoardView('matrix')" id="viewMatrixBtn" class="px-2.5 py-1 rounded-md text-slate-400 hover:text-slate-200 transition">
+            12T Grid
+          </button>
+        </div>
+      </div>
+
+      <!-- VIEW A: Draft Stream (Vertical Chronological Pick Feed) -->
+      <div id="boardStreamView" class="flex-1 overflow-y-auto max-h-[calc(100vh-230px)] space-y-2 pr-1 custom-scrollbar">
+        <div id="draftStreamList" class="space-y-2">
+          <!-- Populated by JS -->
+        </div>
+      </div>
+
+      <!-- VIEW B: 12-Team Matrix Grid -->
+      <div id="boardMatrixView" class="hidden flex-1 overflow-x-auto overflow-y-auto max-h-[calc(100vh-230px)] p-2 rounded-2xl bg-[#080e1c] border border-[#162444] custom-scrollbar">
+        <div id="snakeMatrixContainer" class="min-w-[760px]">
+          <!-- Snake matrix table generated by JS -->
+        </div>
+      </div>
+
+    </section>
+
+  </main>
+
+  <!-- ========================================== -->
+  <!-- MODAL DIALOGS & OVERLAYS                   -->
+  <!-- ========================================== -->
+
+  <!-- 1. Draft Settings & Slot Selection Modal -->
+  <div id="settingsModal" class="fixed inset-0 z-50 bg-slate-950/80 backdrop-blur-sm hidden items-center justify-center p-4">
+    <div class="bg-[#0c1426] border border-[#1e3056] rounded-2xl max-w-md w-full p-5 shadow-2xl space-y-4">
+      <div class="flex items-center justify-between border-b border-[#182645] pb-3">
+        <div class="flex items-center gap-2">
+          <div class="w-8 h-8 rounded-lg bg-cyan-500/20 text-cyan-400 flex items-center justify-center font-bold">
+            <i class="fa-solid fa-sliders"></i>
+          </div>
+          <h3 class="font-bold text-sm text-slate-100">Draft Setup &amp; Position</h3>
+        </div>
+        <button onclick="window.closeSettingsModal()" class="text-slate-400 hover:text-slate-200">
+          <i class="fa-solid fa-xmark text-base"></i>
+        </button>
+      </div>
+
+      <div class="space-y-3 text-xs">
+        <div>
+          <label class="block text-slate-400 font-bold mb-1.5">Select Your Draft Slot (1–12):</label>
+          <div class="grid grid-cols-6 gap-2" id="slotSelectorGrid">
+            <!-- Slot buttons 1 to 12 dynamically generated -->
+          </div>
+        </div>
+
+        <div class="p-3 bg-[#070d1a] border border-[#15233e] rounded-xl space-y-1.5 text-slate-300">
+          <div class="font-bold text-cyan-400 flex items-center gap-1.5">
+            <i class="fa-solid fa-circle-info"></i> Slot Dynamics:
+          </div>
+          <p id="slotDynamicsNote" class="text-[11px] text-slate-400 leading-relaxed">
+            Picks at the turn (1, 2, 11, 12) require aggressive reach strategies due to long 22-pick intervals.
+          </p>
+        </div>
+      </div>
+
+      <div class="flex justify-end gap-2 pt-2 border-t border-[#182645]">
+        <button onclick="window.closeSettingsModal()" class="px-4 py-2 bg-[#16233e] hover:bg-[#203254] text-slate-300 font-bold text-xs rounded-xl transition">
+          Close
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- 2. Opponents & League Needs Modal -->
+  <div id="opponentsModal" class="fixed inset-0 z-50 bg-slate-950/80 backdrop-blur-sm hidden items-center justify-center p-4">
+    <div class="bg-[#0c1426] border border-[#1e3056] rounded-2xl max-w-4xl w-full max-h-[85vh] flex flex-col shadow-2xl overflow-hidden">
+      <div class="p-4 border-b border-[#182645] flex items-center justify-between bg-[#091122]">
+        <div class="flex items-center gap-2.5">
+          <div class="w-8 h-8 rounded-lg bg-indigo-500/20 text-indigo-400 flex items-center justify-center font-bold">
+            <i class="fa-solid fa-users-viewfinder"></i>
+          </div>
+          <div>
+            <h3 class="font-bold text-sm text-slate-100">League Opponents &amp; Needs Analyzer</h3>
+            <p class="text-[11px] text-slate-400">Track competitor roster builds and predict upcoming positional snipes before your turn</p>
+          </div>
+        </div>
+        <button onclick="window.closeOpponentsModal()" class="text-slate-400 hover:text-slate-200">
+          <i class="fa-solid fa-xmark text-lg"></i>
+        </button>
+      </div>
+
+      <div class="p-4 overflow-y-auto flex-1 custom-scrollbar">
+        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3" id="opponentsRosterGrid">
+          <!-- Populated by JS -->
+        </div>
+      </div>
+
+      <div class="p-3 border-t border-[#182645] bg-[#080e1c] flex justify-between items-center text-xs">
+        <span class="text-slate-400 text-[11px]">AI teams utilize realistic draft strategies (Zero-RB, Hero-RB, Elite QB/TE runs).</span>
+        <button onclick="window.closeOpponentsModal()" class="px-4 py-1.5 bg-[#16233e] hover:bg-[#203254] text-slate-200 font-bold rounded-xl transition">
+          Close
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- 3. AI Strategic Oracle Full Analysis Modal -->
+  <div id="aiModal" class="fixed inset-0 z-50 bg-slate-950/80 backdrop-blur-sm hidden items-center justify-center p-4">
+    <div class="bg-[#0c1426] border border-cyan-500/30 rounded-2xl max-w-xl w-full max-h-[85vh] flex flex-col shadow-2xl overflow-hidden glow-cyan">
+      <div class="p-4 border-b border-[#182645] flex items-center justify-between bg-[#091122]">
+        <div class="flex items-center gap-2">
+          <div class="w-8 h-8 rounded-lg bg-cyan-500/20 text-cyan-400 flex items-center justify-center font-bold">
+            <i class="fa-solid fa-wand-magic-sparkles"></i>
+          </div>
+          <div>
+            <h3 class="font-bold text-sm text-slate-100">Strategic Oracle Analysis</h3>
+            <p class="text-[11px] text-cyan-400 font-mono">Real-Time Scenario Diagnosis</p>
+          </div>
+        </div>
+        <button onclick="window.closeAiModal()" class="text-slate-400 hover:text-slate-200">
+          <i class="fa-solid fa-xmark text-lg"></i>
+        </button>
+      </div>
+
+      <div class="p-4 overflow-y-auto flex-1 space-y-3 custom-scrollbar" id="aiModalContent">
+        <!-- Rendered dynamically -->
+      </div>
+
+      <div class="p-3 border-t border-[#182645] bg-[#080e1c] flex justify-end">
+        <button onclick="window.closeAiModal()" class="px-4 py-1.5 bg-[#16233e] hover:bg-[#203254] text-slate-200 font-bold rounded-xl text-xs transition">Done</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- 4. Reset Confirmation Modal -->
+  <div id="resetModal" class="fixed inset-0 z-50 bg-slate-950/80 backdrop-blur-sm hidden items-center justify-center p-4">
+    <div class="bg-[#0c1426] border border-[#1e3056] rounded-2xl max-w-sm w-full p-5 shadow-2xl text-center">
+      <div class="w-12 h-12 rounded-full bg-rose-500/20 text-rose-400 mx-auto flex items-center justify-center text-xl mb-3">
+        <i class="fa-solid fa-triangle-exclamation"></i>
+      </div>
+      <h3 class="font-bold text-sm text-slate-100 mb-1">Reset Entire Draft?</h3>
+      <p class="text-xs text-slate-400 mb-4">This will clear all 17 rounds of drafted players and restart at Round 1, Pick 1.</p>
+      <div class="flex items-center justify-center gap-2 text-xs">
+        <button onclick="window.closeResetModal()" class="px-4 py-2 bg-[#16233e] hover:bg-[#203254] text-slate-300 font-bold rounded-xl">Cancel</button>
+        <button onclick="window.confirmResetDraft()" class="px-4 py-2 bg-rose-600 hover:bg-rose-500 text-white font-bold rounded-xl">Yes, Reset</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- 5. Interactive Risk & Medical Diagnosis Modal -->
+  <div id="riskDetailModal" class="fixed inset-0 z-50 bg-slate-950/80 backdrop-blur-sm hidden items-center justify-center p-4">
+    <div class="bg-[#0c1426] border border-amber-500/30 rounded-2xl max-w-lg w-full max-h-[85vh] flex flex-col shadow-2xl overflow-hidden">
+      <div class="p-4 border-b border-[#182645] flex items-center justify-between bg-[#091122]">
+        <div class="flex items-center gap-2.5">
+          <div class="w-8 h-8 rounded-lg bg-amber-500/20 text-amber-400 flex items-center justify-center text-sm font-bold">
+            <i class="fa-solid fa-notes-medical"></i>
+          </div>
+          <div>
+            <h3 class="font-bold text-sm text-slate-100" id="riskModalPlayerName">Player Risk Diagnosis</h3>
+            <p class="text-[11px] text-slate-400">Contextual Injury &amp; Opportunity Cost Analysis</p>
+          </div>
+        </div>
+        <button onclick="window.closeRiskModal()" class="text-slate-400 hover:text-slate-200">
+          <i class="fa-solid fa-xmark text-lg"></i>
+        </button>
+      </div>
+
+      <div class="p-4 overflow-y-auto flex-1 space-y-3 custom-scrollbar" id="riskModalContent">
+        <!-- Rendered dynamically by JS -->
+      </div>
+
+      <div class="p-3 border-t border-[#182645] bg-[#080e1c] flex justify-end">
+        <button onclick="window.closeRiskModal()" class="px-4 py-1.5 bg-[#16233e] hover:bg-[#203254] text-slate-200 font-bold rounded-xl text-xs transition">Dismiss</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ========================================== -->
+  <!-- JAVASCRIPT ENGINE & DATABASE               -->
+  <!-- ========================================== -->
+  <script>
+    /* --- OFFICIAL 2026 ESPN PPR TOP 300 DATABASE --- */
+    const ESPN_TOP_300_SEED = [
+      // --- RANKINGS 1 - 40 ---
+      { rank: 1, posRank: 'RB1', name: 'Jahmyr Gibbs', team: 'DET', bye: 6, pos: 'RB', proj: 325, adp: 1.1, health: 'CLEAN', note: 'ESPN #1 Overall. Elite 3-down bellcow behind dominant Detroit offensive line.' },
+      { rank: 2, posRank: 'RB2', name: 'Bijan Robinson', team: 'ATL', bye: 11, pos: 'RB', proj: 320, adp: 2.1, health: 'CLEAN', note: 'Generational three-down talent with massive touch share and goal line monopoly.' },
+      { rank: 3, posRank: 'WR1', name: "Ja'Marr Chase", team: 'CIN', bye: 6, pos: 'WR', proj: 315, adp: 3.2, health: 'CLEAN', note: 'Alpha WR1 overall ceiling; unmatched target share and explosive weekly ceiling.' },
+      { rank: 4, posRank: 'WR2', name: 'Puka Nacua', team: 'LAR', bye: 11, pos: 'WR', proj: 308, adp: 4.2, health: 'CLEAN', note: 'Primary engine in McVay timing pass offense; elite separation metrics.' },
+      { rank: 5, posRank: 'WR3', name: 'Jaxon Smith-Njigba', team: 'SEA', bye: 11, pos: 'WR', proj: 302, adp: 5.1, health: 'CLEAN', note: 'Dominant WR1 target vacuum in Seattle with top-tier separation.' },
+      { rank: 6, posRank: 'RB3', name: 'Christian McCaffrey', team: 'SF', bye: 8, pos: 'RB', proj: 295, adp: 6.3, health: 'RISK', riskReason: 'Bilateral Achilles tendinitis & calf strain history; managing strict veteran practice load in SF.', note: 'Top overall per-game ceiling when active; managing soft-tissue maintenance.' },
+      { rank: 7, posRank: 'RB4', name: 'Jonathan Taylor', team: 'IND', bye: 13, pos: 'RB', proj: 290, adp: 7.2, health: 'CLEAN', note: 'Workhorse volume anchor behind physical Colts interior offensive line.' },
+      { rank: 8, posRank: 'WR4', name: 'Amon-Ra St. Brown', team: 'DET', bye: 6, pos: 'WR', proj: 292, adp: 8.1, health: 'CLEAN', note: 'PPR gold standard; commands relentless intermediate target volume across drives.' },
+      { rank: 9, posRank: 'WR5', name: 'CeeDee Lamb', team: 'DAL', bye: 14, pos: 'WR', proj: 288, adp: 9.2, health: 'CLEAN', note: 'Target vacuum in high-paced Dallas scheme with Pickens commanding perimeter coverage.' },
+      { rank: 10, posRank: 'WR6', name: 'Justin Jefferson', team: 'MIN', bye: 6, pos: 'WR', proj: 286, adp: 10.1, health: 'CLEAN', note: 'Premier perimeter target in Minnesota; primary vacuum for Kevin O\'Connell.' },
+      { rank: 11, posRank: 'RB5', name: "De'Von Achane", team: 'MIA', bye: 6, pos: 'RB', proj: 282, adp: 11.2, health: 'CLEAN', note: 'Unmatched explosive yards per touch; perimeter speed weapon in Miami.' },
+      { rank: 12, posRank: 'RB6', name: 'James Cook III', team: 'BUF', bye: 7, pos: 'RB', proj: 280, adp: 12.3, health: 'CLEAN', note: 'Expanded goal line work and dual-threat receiving role in Bills high-scoring attack.' },
+      { rank: 13, posRank: 'RB7', name: 'Jeremiyah Love', team: 'ARI', bye: 14, pos: 'RB', proj: 275, adp: 13.4, health: 'CLEAN', note: 'Ascending rookie starter with electric open-field elusiveness and receiving floor.' },
+      { rank: 14, posRank: 'WR7', name: 'Drake London', team: 'ATL', bye: 11, pos: 'WR', proj: 272, adp: 14.2, health: 'CLEAN', note: 'High contested-catch conversion rate and primary red zone target in Atlanta.' },
+      { rank: 15, posRank: 'RB8', name: 'Saquon Barkley', team: 'PHI', bye: 10, pos: 'RB', proj: 278, adp: 15.1, health: 'CLEAN', note: 'High-efficiency three-down workhorse behind physical Eagles front.' },
+      { rank: 16, posRank: 'RB9', name: 'Derrick Henry', team: 'BAL', bye: 13, pos: 'RB', proj: 270, adp: 16.2, health: 'CLEAN', note: 'Touchdown machine and fourth-quarter hammer in Lamar Jackson\'s ground game.' },
+      { rank: 17, posRank: 'RB10', name: 'Ashton Jeanty', team: 'LV', bye: 13, pos: 'RB', proj: 268, adp: 17.1, health: 'RISK', riskReason: 'Ramping up workload following preseason high-ankle tweak; full go for early season.', note: 'High-contact tackle breaker with three-down pass catching pedigree.' },
+      { rank: 18, posRank: 'RB11', name: 'Kenneth Walker III', team: 'KC', bye: 5, pos: 'RB', proj: 265, adp: 18.2, health: 'CLEAN', note: 'Dynamic explosive playmaker in Andy Reid\'s Kansas City backfield.' },
+      { rank: 19, posRank: 'RB12', name: 'Chase Brown', team: 'CIN', bye: 6, pos: 'RB', proj: 262, adp: 19.3, health: 'CLEAN', note: 'Lead pass-catching running back in explosive Bengals passing offense.' },
+      { rank: 20, posRank: 'TE1', name: 'Trey McBride', team: 'ARI', bye: 14, pos: 'TE', proj: 258, adp: 20.4, health: 'CLEAN', note: 'ESPN TE1. Heavy target sponge and middle-of-the-field anchor in Arizona.' },
+      { rank: 21, posRank: 'TE2', name: 'Brock Bowers', team: 'LV', bye: 13, pos: 'TE', proj: 255, adp: 21.2, health: 'CLEAN', note: 'Positional game-breaker; primary target across all downs in Raiders scheme.' },
+      { rank: 22, posRank: 'RB13', name: 'Omarion Hampton', team: 'LAC', bye: 7, pos: 'RB', proj: 254, adp: 22.1, health: 'CLEAN', note: 'Physical power runner anchoring Jim Harbaugh\'s run-first Chargers ground game.' },
+      { rank: 23, posRank: 'RB14', name: 'Breece Hall', team: 'NYJ', bye: 13, pos: 'RB', proj: 250, adp: 23.3, health: 'CLEAN', note: 'Versatile workhorse runner with high-end pass catching skillset.' },
+      { rank: 24, posRank: 'WR8', name: 'Rashee Rice', team: 'KC', bye: 5, pos: 'WR', proj: 252, adp: 24.2, health: 'CLEAN', note: 'Intermediate middle-of-field target vacuum for Patrick Mahomes in KC.' },
+      { rank: 25, posRank: 'WR9', name: 'Nico Collins', team: 'HOU', bye: 8, pos: 'WR', proj: 250, adp: 25.1, health: 'CLEAN', note: 'Dominant perimeter alpha with league-leading yards-per-route run in Texans attack.' },
+      { rank: 26, posRank: 'WR10', name: 'A.J. Brown', team: 'NE', bye: 11, pos: 'WR', proj: 248, adp: 26.2, health: 'CLEAN', note: 'Alpha boundary target with elite physical yards after catch in New England.' },
+      { rank: 27, posRank: 'WR11', name: 'Chris Olave', team: 'NO', bye: 8, pos: 'WR', proj: 246, adp: 27.3, health: 'CLEAN', note: 'Refined route technician commanding deep target funnel in New Orleans.' },
+      { rank: 28, posRank: 'WR12', name: 'Malik Nabers', team: 'NYG', bye: 8, pos: 'WR', proj: 245, adp: 28.1, health: 'CLEAN', note: 'Explosive after catch; commands heavy 30%+ team target share in NY.' },
+      { rank: 29, posRank: 'WR13', name: 'Garrett Wilson', team: 'NYJ', bye: 13, pos: 'WR', proj: 242, adp: 29.2, health: 'CLEAN', note: 'Elite change-of-direction playmaker and red zone receiver for Jets.' },
+      { rank: 30, posRank: 'RB15', name: 'Josh Jacobs', team: 'GB', bye: 11, pos: 'RB', proj: 240, adp: 30.1, health: 'CLEAN', note: 'Physical between-the-tackles bellcow in Green Bay system.' },
+      { rank: 31, posRank: 'WR14', name: 'George Pickens', team: 'DAL', bye: 14, pos: 'WR', proj: 238, adp: 31.2, health: 'CLEAN', note: 'Spectacular contested-catch downfield weapon opposite Lamb in Dallas.' },
+      { rank: 32, posRank: 'RB16', name: 'Javonte Williams', team: 'DAL', bye: 14, pos: 'RB', proj: 235, adp: 32.1, health: 'CLEAN', note: 'Physical inside runner earning primary backfield touches for Cowboys.' },
+      { rank: 33, posRank: 'WR15', name: 'Tetairoa McMillan', team: 'CAR', bye: 5, pos: 'WR', proj: 234, adp: 33.2, health: 'CLEAN', note: 'Towering rookie alpha boundary weapon in Carolina.' },
+      { rank: 34, posRank: 'WR16', name: 'Zay Flowers', team: 'BAL', bye: 13, pos: 'WR', proj: 232, adp: 34.1, health: 'CLEAN', note: 'Explosive slot and perimeter weapon for Lamar Jackson in Baltimore.' },
+      { rank: 35, posRank: 'WR17', name: 'DeVonta Smith', team: 'PHI', bye: 10, pos: 'WR', proj: 230, adp: 35.2, health: 'CLEAN', note: 'Silky smooth separator and high-leverage target converter.' },
+      { rank: 36, posRank: 'QB1', name: 'Josh Allen', team: 'BUF', bye: 7, pos: 'QB', proj: 388, adp: 36.1, health: 'CLEAN', note: 'ESPN QB1. Elite overall ceiling with heavy designed goal line rushes for Bills.' },
+      { rank: 37, posRank: 'RB17', name: 'Travis Etienne Jr.', team: 'NO', bye: 8, pos: 'RB', proj: 228, adp: 37.2, health: 'CLEAN', note: 'Three-down burst back in New Orleans backfield.' },
+      { rank: 38, posRank: 'RB18', name: 'Kyren Williams', team: 'LAR', bye: 11, pos: 'RB', proj: 226, adp: 38.3, health: 'CLEAN', note: 'High red-zone snap percentage when active in Rams zone scheme.' },
+      { rank: 39, posRank: 'RB19', name: 'Quinshon Judkins', team: 'CLE', bye: 11, pos: 'RB', proj: 225, adp: 39.1, health: 'CLEAN', note: 'Physical rookie power runner carving out starting touches in Cleveland.' },
+      { rank: 40, posRank: 'RB20', name: 'Cam Skattebo', team: 'NYG', bye: 8, pos: 'RB', proj: 222, adp: 40.2, health: 'CLEAN', note: 'Hard-nosed rookie back with downhill physicality in NY.' },
+
+      // --- RANKINGS 41 - 80 ---
+      { rank: 41, posRank: 'RB21', name: 'Bucky Irving', team: 'TB', bye: 10, pos: 'RB', proj: 220, adp: 41.3, health: 'CLEAN', note: 'Elusive space back with expanding touch share in Tampa Bay.' },
+      { rank: 42, posRank: 'WR18', name: 'Emeka Egbuka', team: 'TB', bye: 10, pos: 'WR', proj: 218, adp: 42.1, health: 'CLEAN', note: 'Precise route technician stepping into primary slot duties.' },
+      { rank: 43, posRank: 'WR19', name: 'Davante Adams', team: 'LAR', bye: 11, pos: 'WR', proj: 216, adp: 43.2, health: 'CLEAN', note: 'Master route technician in McVay offense.' },
+      { rank: 44, posRank: 'WR20', name: 'Ladd McConkey', team: 'LAC', bye: 7, pos: 'WR', proj: 214, adp: 44.1, health: 'CLEAN', note: 'Herbert favorite third-down separator on perimeter.' },
+      { rank: 45, posRank: 'WR21', name: 'Terry McLaurin', team: 'WAS', bye: 7, pos: 'WR', proj: 212, adp: 45.2, health: 'CLEAN', note: 'Dependable chain mover and deep-ball specialist for Daniels.' },
+      { rank: 46, posRank: 'WR22', name: 'Tee Higgins', team: 'CIN', bye: 6, pos: 'WR', proj: 210, adp: 46.1, health: 'CLEAN', note: 'Alpha boundary weapon opposite Chase in Cincinnati.' },
+      { rank: 47, posRank: 'WR23', name: 'Jaylen Waddle', team: 'DEN', bye: 10, pos: 'WR', proj: 208, adp: 47.2, health: 'CLEAN', note: 'Speed burner commanding deep targets in Denver.' },
+      { rank: 48, posRank: 'WR24', name: 'Rome Odunze', team: 'CHI', bye: 10, pos: 'WR', proj: 206, adp: 48.1, health: 'CLEAN', note: 'High-pedigree outside receiver in ascending Bears attack.' },
+      { rank: 49, posRank: 'TE3', name: 'Colston Loveland', team: 'CHI', bye: 10, pos: 'TE', proj: 204, adp: 49.2, health: 'CLEAN', note: 'Rookie seam-stretcher and matchup nightmare in Chicago.' },
+      { rank: 50, posRank: 'TE4', name: 'Tyler Warren', team: 'IND', bye: 13, pos: 'TE', proj: 202, adp: 50.1, health: 'CLEAN', note: 'Dynamic dual-threat tight end in Colts offensive attack.' },
+      { rank: 51, posRank: 'WR25', name: 'Jameson Williams', team: 'DET', bye: 6, pos: 'WR', proj: 200, adp: 51.2, health: 'CLEAN', note: 'Game-breaking speed on crossers and vertical routes.' },
+      { rank: 52, posRank: 'WR26', name: 'DJ Moore', team: 'BUF', bye: 7, pos: 'WR', proj: 198, adp: 52.1, health: 'CLEAN', note: 'YAC powerhouse stepping into primary target role with Allen.' },
+      { rank: 53, posRank: 'WR27', name: 'Luther Burden III', team: 'CHI', bye: 10, pos: 'WR', proj: 196, adp: 53.2, health: 'CLEAN', note: 'Dynamic slot separator and YAC creator for Bears.' },
+      { rank: 54, posRank: 'WR28', name: 'Carnell Tate', team: 'TEN', bye: 9, pos: 'WR', proj: 194, adp: 54.1, health: 'CLEAN', note: 'Ascending rookie wideout in Tennessee.' },
+      { rank: 55, posRank: 'QB2', name: 'Jayden Daniels', team: 'WAS', bye: 7, pos: 'QB', proj: 360, adp: 55.2, health: 'CLEAN', note: 'Konami code rushing QB ceiling with Kliff Kingsbury in Washington.' },
+      { rank: 56, posRank: 'QB3', name: 'Lamar Jackson', team: 'BAL', bye: 13, pos: 'QB', proj: 375, adp: 56.1, health: 'CLEAN', note: 'Dual-threat MVP upside with safe weekly rushing baseline in Baltimore.' },
+      { rank: 57, posRank: 'QB4', name: 'Drake Maye', team: 'NE', bye: 11, pos: 'QB', proj: 350, adp: 57.2, health: 'CLEAN', note: 'Dual-threat breakout leader in New England with A.J. Brown.' },
+      { rank: 58, posRank: 'QB5', name: 'Jalen Hurts', team: 'PHI', bye: 10, pos: 'QB', proj: 355, adp: 58.1, health: 'CLEAN', note: 'Tush-push rushing touchdown engine with Saquon in Philly.' },
+      { rank: 59, posRank: 'RB22', name: "D'Andre Swift", team: 'CHI', bye: 10, pos: 'RB', proj: 192, adp: 59.2, health: 'CLEAN', note: 'Pass-catching staple with expanded touches in Chicago.' },
+      { rank: 60, posRank: 'RB23', name: 'Bhayshul Tuten', team: 'JAC', bye: 7, pos: 'RB', proj: 190, adp: 60.1, health: 'CLEAN', note: 'Rookie burst runner carving touches in Jacksonville.' },
+      { rank: 61, posRank: 'RB24', name: 'David Montgomery', team: 'HOU', bye: 8, pos: 'RB', proj: 188, adp: 61.2, health: 'CLEAN', note: 'Tough red-zone finisher in Houston.' },
+      { rank: 62, posRank: 'RB25', name: 'Jadarian Price', team: 'SEA', bye: 11, pos: 'RB', proj: 186, adp: 62.1, health: 'CLEAN', note: 'Dynamic young back in Seattle.' },
+      { rank: 63, posRank: 'RB26', name: 'Rhamondre Stevenson', team: 'NE', bye: 11, pos: 'RB', proj: 185, adp: 63.2, health: 'CLEAN', note: 'Workhorse interior grinder in New England.' },
+      { rank: 64, posRank: 'RB27', name: 'Jaylen Warren', team: 'PIT', bye: 9, pos: 'RB', proj: 184, adp: 64.1, health: 'CLEAN', note: 'High-efficiency pass-catching specialist in Pittsburgh.' },
+      { rank: 65, posRank: 'WR29', name: 'Courtland Sutton', team: 'DEN', bye: 10, pos: 'WR', proj: 182, adp: 65.2, health: 'CLEAN', note: 'End-zone jump ball specialist in Denver.' },
+      { rank: 66, posRank: 'WR30', name: 'Michael Pittman Jr.', team: 'PIT', bye: 9, pos: 'WR', proj: 180, adp: 66.1, health: 'CLEAN', note: 'High-volume possession target.' },
+      { rank: 67, posRank: 'WR31', name: 'Marvin Harrison Jr.', team: 'ARI', bye: 14, pos: 'WR', proj: 178, adp: 67.2, health: 'CLEAN', note: 'Alpha perimeter receiver with big-play upside in Arizona.' },
+      { rank: 68, posRank: 'WR32', name: 'DK Metcalf', team: 'PIT', bye: 9, pos: 'WR', proj: 176, adp: 68.1, health: 'CLEAN', note: 'Physical deep-threat receiver in Pittsburgh.' },
+      { rank: 69, posRank: 'WR33', name: 'Parker Washington', team: 'JAC', bye: 7, pos: 'WR', proj: 174, adp: 69.2, health: 'CLEAN', note: 'Ascending slot weapon for Jaguars.' },
+      { rank: 70, posRank: 'WR34', name: 'Alec Pierce', team: 'IND', bye: 13, pos: 'WR', proj: 172, adp: 70.1, health: 'CLEAN', note: 'Vertical lid-lifter for Colts offense.' },
+      { rank: 71, posRank: 'TE5', name: 'Kyle Pitts Sr.', team: 'ATL', bye: 11, pos: 'TE', proj: 170, adp: 71.2, health: 'CLEAN', note: 'Generational athletic profile in Atlanta.' },
+      { rank: 72, posRank: 'TE6', name: 'Harold Fannin Jr.', team: 'CLE', bye: 11, pos: 'TE', proj: 168, adp: 72.1, health: 'CLEAN', note: 'Rookie pass-catching tight end in Cleveland.' },
+      { rank: 73, posRank: 'TE7', name: 'Sam LaPorta', team: 'DET', bye: 6, pos: 'TE', proj: 166, adp: 73.2, health: 'CLEAN', note: 'Proven red-zone target in Lions offense.' },
+      { rank: 74, posRank: 'QB6', name: 'Joe Burrow', team: 'CIN', bye: 6, pos: 'QB', proj: 338, adp: 74.1, health: 'CLEAN', note: 'Elite pocket passer with Chase and Higgins.' },
+      { rank: 75, posRank: 'QB7', name: 'Jaxson Dart', team: 'NYG', bye: 8, pos: 'QB', proj: 320, adp: 75.2, health: 'CLEAN', note: 'Rookie dual-threat signal caller in New York.' },
+      { rank: 76, posRank: 'WR35', name: 'Christian Watson', team: 'GB', bye: 11, pos: 'WR', proj: 165, adp: 76.1, health: 'CLEAN', note: 'Touchdown magnet with red zone size in Green Bay.' },
+      { rank: 77, posRank: 'WR36', name: 'Mike Evans', team: 'SF', bye: 8, pos: 'WR', proj: 164, adp: 77.2, health: 'RISK', riskReason: 'Recurrent hamstring tightness & 30+ veteran load management; elevated re-injury risk under heavy sprint load.', note: 'Veteran red zone weapon; managing soft-tissue precautions in SF.' },
+      { rank: 78, posRank: 'WR37', name: 'Matthew Golden', team: 'GB', bye: 11, pos: 'WR', proj: 162, adp: 78.1, health: 'CLEAN', note: 'Rookie speed threat for Packers.' },
+      { rank: 79, posRank: 'WR38', name: 'Brian Thomas Jr.', team: 'JAC', bye: 7, pos: 'WR', proj: 160, adp: 79.2, health: 'CLEAN', note: 'Elite deep threat and WR1 for Lawrence in Jacksonville.' },
+      { rank: 80, posRank: 'WR39', name: 'Michael Wilson', team: 'ARI', bye: 14, pos: 'WR', proj: 158, adp: 80.1, health: 'CLEAN', note: 'Physical boundary target in Arizona.' },
+
+      // --- RANKINGS 81 - 120 ---
+      { rank: 81, posRank: 'WR40', name: 'Jakobi Meyers', team: 'JAC', bye: 7, pos: 'WR', proj: 156, adp: 81.2, health: 'CLEAN', note: 'Intermediate reception converter in Jacksonville.' },
+      { rank: 82, posRank: 'QB8', name: 'Trevor Lawrence', team: 'JAC', bye: 7, pos: 'QB', proj: 315, adp: 82.1, health: 'CLEAN', note: 'Solid QB floor with upgraded target weapons.' },
+      { rank: 83, posRank: 'QB9', name: 'Dak Prescott', team: 'DAL', bye: 14, pos: 'QB', proj: 318, adp: 83.2, health: 'CLEAN', note: 'Pass-heavy script leader with CeeDee Lamb.' },
+      { rank: 84, posRank: 'QB10', name: 'Bo Nix', team: 'DEN', bye: 10, pos: 'QB', proj: 305, adp: 84.1, health: 'CLEAN', note: 'High completion percentage and scramble floor in Denver.' },
+      { rank: 85, posRank: 'QB11', name: 'Brock Purdy', team: 'SF', bye: 8, pos: 'QB', proj: 308, adp: 85.2, health: 'CLEAN', note: 'Elite Shanahan offensive efficiency distributor.' },
+      { rank: 86, posRank: 'QB12', name: 'Matthew Stafford', team: 'LAR', bye: 11, pos: 'QB', proj: 285, adp: 86.1, health: 'CLEAN', note: 'Veteran master in McVay passing offense with Nacua/Adams.' },
+      { rank: 87, posRank: 'QB13', name: 'Caleb Williams', team: 'CHI', bye: 10, pos: 'QB', proj: 312, adp: 87.2, health: 'CLEAN', note: 'Loaded offensive supporting cast in Chicago.' },
+      { rank: 88, posRank: 'WR41', name: "Wan'Dale Robinson", team: 'TEN', bye: 9, pos: 'WR', proj: 154, adp: 88.1, health: 'CLEAN', note: 'PPR short-area slot target in Tennessee.' },
+      { rank: 89, posRank: 'WR42', name: 'Jordan Addison', team: 'MIN', bye: 6, pos: 'WR', proj: 152, adp: 89.2, health: 'CLEAN', note: 'Premier route separator opposite Jefferson in Minnesota.' },
+      { rank: 90, posRank: 'WR43', name: "De'Zhaun Stribling", team: 'SF', bye: 8, pos: 'WR', proj: 150, adp: 90.1, health: 'CLEAN', note: 'Rookie boundary receiver for 49ers.' },
+      { rank: 91, posRank: 'WR44', name: 'Khalil Shakir', team: 'BUF', bye: 7, pos: 'WR', proj: 148, adp: 91.2, health: 'CLEAN', note: 'High-efficiency slot YAC runner for Josh Allen.' },
+      { rank: 92, posRank: 'WR45', name: 'Jayden Reed', team: 'GB', bye: 11, pos: 'WR', proj: 146, adp: 92.1, health: 'CLEAN', note: 'Versatile gadget and slot runner in Green Bay.' },
+      { rank: 93, posRank: 'QB14', name: 'Justin Herbert', team: 'LAC', bye: 7, pos: 'QB', proj: 302, adp: 93.2, health: 'CLEAN', note: 'Arm talent leader in disciplined Chargers offense.' },
+      { rank: 94, posRank: 'QB15', name: 'Patrick Mahomes', team: 'KC', bye: 5, pos: 'QB', proj: 340, adp: 94.1, health: 'CLEAN', note: 'Consistently top-tier passing floor with Rice and Reid.' },
+      { rank: 95, posRank: 'RB28', name: 'Rico Dowdle', team: 'PIT', bye: 9, pos: 'RB', proj: 145, adp: 95.2, health: 'CLEAN', note: 'Rotational power runner in Pittsburgh.' },
+      { rank: 96, posRank: 'RB29', name: 'Jonathon Brooks', team: 'CAR', bye: 5, pos: 'RB', proj: 144, adp: 96.1, health: 'RISK', riskReason: 'Post-ACL surgical return and soft-tissue ramp-up period.', note: 'Explosive runner in Carolina backfield.' },
+      { rank: 97, posRank: 'RB30', name: 'TreVeyon Henderson', team: 'NE', bye: 11, pos: 'RB', proj: 142, adp: 97.2, health: 'CLEAN', note: 'Explosive rookie receiving back in New England.' },
+      { rank: 98, posRank: 'RB31', name: 'Tony Pollard', team: 'TEN', bye: 9, pos: 'RB', proj: 140, adp: 98.1, health: 'CLEAN', note: 'Speed back sharing backfield touches in Tennessee.' },
+      { rank: 99, posRank: 'RB32', name: 'Kenny Gainwell', team: 'TB', bye: 10, pos: 'RB', proj: 138, adp: 99.2, health: 'CLEAN', note: 'Change of pace and pass catching back in Tampa.' },
+      { rank: 100, posRank: 'RB33', name: 'Chuba Hubbard', team: 'CAR', bye: 5, pos: 'RB', proj: 136, adp: 100.1, health: 'CLEAN', note: 'Proven volume runner in Carolina.' },
+      { rank: 101, posRank: 'TE8', name: 'George Kittle', team: 'SF', bye: 8, pos: 'TE', proj: 145, adp: 101.2, health: 'RISK', riskReason: 'Late-stage Achilles tendon rehab and core muscle soreness; managing reps.', note: 'Elite tight end talent managing veteran rehabilitation in SF.' },
+      { rank: 102, posRank: 'TE9', name: 'Tucker Kraft', team: 'GB', bye: 11, pos: 'TE', proj: 142, adp: 102.1, health: 'CLEAN', note: 'Athletic YAC tight end in Green Bay offense.' },
+      { rank: 103, posRank: 'TE10', name: 'Dallas Goedert', team: 'PHI', bye: 10, pos: 'TE', proj: 140, adp: 103.2, health: 'CLEAN', note: 'Physical seam-stretcher and blocker for Eagles.' },
+      { rank: 104, posRank: 'TE11', name: 'Travis Kelce', team: 'KC', bye: 5, pos: 'TE', proj: 138, adp: 104.1, health: 'CLEAN', note: 'Veteran red-zone weapon for Mahomes in Kansas City.' },
+      { rank: 105, posRank: 'RB34', name: 'J.K. Dobbins', team: 'DEN', bye: 10, pos: 'RB', proj: 135, adp: 105.2, health: 'CLEAN', note: 'Efficient between-tackles runner in Payton scheme.' },
+      { rank: 106, posRank: 'RB35', name: 'Kyle Monangai', team: 'CHI', bye: 10, pos: 'RB', proj: 134, adp: 106.1, health: 'CLEAN', note: 'Rookie physical inside grinder for Bears.' },
+      { rank: 107, posRank: 'RB36', name: 'Jacory Croskey-Merritt', team: 'WAS', bye: 7, pos: 'RB', proj: 132, adp: 107.2, health: 'CLEAN', note: 'Rookie runner in Kingsbury backfield.' },
+      { rank: 108, posRank: 'RB37', name: 'Aaron Jones Sr.', team: 'MIN', bye: 6, pos: 'RB', proj: 130, adp: 108.1, health: 'CLEAN', note: 'Veteran pass-catching back in Minnesota.' },
+      { rank: 109, posRank: 'TE12', name: 'Jake Ferguson', team: 'DAL', bye: 14, pos: 'TE', proj: 136, adp: 109.2, health: 'CLEAN', note: 'Safety valve for Dak Prescott in Dallas.' },
+      { rank: 110, posRank: 'TE13', name: 'Mark Andrews', team: 'BAL', bye: 13, pos: 'TE', proj: 135, adp: 110.1, health: 'CLEAN', note: 'Proven red zone monster for Lamar in Baltimore.' },
+      { rank: 111, posRank: 'TE14', name: 'Isaiah Likely', team: 'NYG', bye: 8, pos: 'TE', proj: 134, adp: 111.2, health: 'CLEAN', note: 'Dynamic athletic receiving weapon in New York.' },
+      { rank: 112, posRank: 'WR46', name: 'Xavier Worthy', team: 'KC', bye: 5, pos: 'WR', proj: 135, adp: 112.1, health: 'CLEAN', note: 'World-class speed threat stretching opposing secondaries in KC.' },
+      { rank: 113, posRank: 'WR47', name: 'Quentin Johnston', team: 'LAC', bye: 7, pos: 'WR', proj: 132, adp: 113.2, health: 'CLEAN', note: 'Perimeter big-bodied target in Chargers attack.' },
+      { rank: 114, posRank: 'WR48', name: 'Stefon Diggs', team: 'WAS', bye: 7, pos: 'WR', proj: 130, adp: 114.1, health: 'CLEAN', note: 'Veteran route specialist in Washington.' },
+      { rank: 115, posRank: 'RB38', name: 'Rachaad White', team: 'WAS', bye: 7, pos: 'RB', proj: 128, adp: 115.2, health: 'CLEAN', note: 'High reception floor in passing situations.' },
+      { rank: 116, posRank: 'TE15', name: 'Dalton Kincaid', team: 'BUF', bye: 7, pos: 'TE', proj: 132, adp: 116.1, health: 'CLEAN', note: 'High-volume slot receiver masquerading as TE.' },
+      { rank: 117, posRank: 'TE16', name: 'T.J. Hockenson', team: 'MIN', bye: 6, pos: 'TE', proj: 130, adp: 117.2, health: 'RISK', riskReason: 'Snap ramp-up management following multi-ligament knee surgical repair.', note: 'Target magnet in Minnesota passing attack.' },
+      { rank: 118, posRank: 'TE17', name: 'Hunter Henry', team: 'NE', bye: 11, pos: 'TE', proj: 128, adp: 118.1, health: 'CLEAN', note: 'Veteran red zone weapon for Maye in New England.' },
+      { rank: 119, posRank: 'TE18', name: 'Terrance Ferguson', team: 'LAR', bye: 11, pos: 'TE', proj: 126, adp: 119.2, health: 'CLEAN', note: 'Rookie seam stretcher for Rams.' },
+      { rank: 120, posRank: 'RB39', name: 'Jordan Mason', team: 'MIN', bye: 6, pos: 'RB', proj: 125, adp: 120.1, health: 'CLEAN', note: 'Physical downhill runner in Minnesota.' },
+
+      // --- RANKINGS 121 - 160 ---
+      { rank: 121, posRank: 'RB40', name: 'Blake Corum', team: 'LAR', bye: 11, pos: 'RB', proj: 124, adp: 121.2, health: 'CLEAN', note: 'Premier contingency bellcow behind Kyren in LA.' },
+      { rank: 122, posRank: 'RB41', name: 'RJ Harvey', team: 'DEN', bye: 10, pos: 'RB', proj: 122, adp: 122.1, health: 'CLEAN', note: 'Explosive rookie back in Denver offense.' },
+      { rank: 123, posRank: 'RB42', name: 'Woody Marks', team: 'HOU', bye: 8, pos: 'RB', proj: 120, adp: 123.2, health: 'CLEAN', note: 'Pass catching rookie back in Houston.' },
+      { rank: 124, posRank: 'WR49', name: 'Josh Downs', team: 'IND', bye: 13, pos: 'WR', proj: 125, adp: 124.1, health: 'CLEAN', note: 'Electric slot creator for Colts.' },
+      { rank: 125, posRank: 'WR50', name: 'KC Concepcion', team: 'CLE', bye: 11, pos: 'WR', proj: 122, adp: 125.2, health: 'CLEAN', note: 'Dynamic rookie playmaker in Cleveland.' },
+      { rank: 126, posRank: 'WR51', name: 'Makai Lemon', team: 'PHI', bye: 10, pos: 'WR', proj: 120, adp: 126.1, health: 'CLEAN', note: 'Rookie receiver in Philadelphia.' },
+      { rank: 127, posRank: 'WR52', name: 'Chris Godwin Jr.', team: 'TB', bye: 10, pos: 'WR', proj: 118, adp: 127.2, health: 'CLEAN', note: 'Slot chain mover in Tampa Bay.' },
+      { rank: 128, posRank: 'WR53', name: 'Deebo Samuel Sr.', team: 'SF', bye: 8, pos: 'WR', proj: 116, adp: 128.1, health: 'CLEAN', note: 'Dual-threat physical weapon for 49ers.' },
+      { rank: 129, posRank: 'WR54', name: 'Romeo Doubs', team: 'NE', bye: 11, pos: 'WR', proj: 115, adp: 129.2, health: 'CLEAN', note: 'Perimeter possession target in New England.' },
+      { rank: 130, posRank: 'WR55', name: 'Jalen Coker', team: 'CAR', bye: 5, pos: 'WR', proj: 114, adp: 130.1, health: 'CLEAN', note: 'Underrated slot technician in Carolina.' },
+      { rank: 131, posRank: 'WR56', name: 'Rashid Shaheed', team: 'SEA', bye: 11, pos: 'WR', proj: 112, adp: 131.2, health: 'CLEAN', note: 'All-Pro returner and deep-shot specialist in Seattle.' },
+      { rank: 132, posRank: 'WR57', name: 'Jalen McMillan', team: 'TB', bye: 10, pos: 'WR', proj: 110, adp: 132.1, health: 'CLEAN', note: 'Precise route technician in Tampa.' },
+      { rank: 133, posRank: 'QB16', name: 'Kyler Murray', team: 'MIN', bye: 6, pos: 'QB', proj: 295, adp: 133.2, health: 'CLEAN', note: 'High rushing floor and dual-threat late QB value in Minnesota.' },
+      { rank: 134, posRank: 'QB17', name: 'Tyler Shough', team: 'NO', bye: 8, pos: 'QB', proj: 260, adp: 134.1, health: 'CLEAN', note: 'Strong-armed quarterback in New Orleans.' },
+      { rank: 135, posRank: 'QB18', name: 'Jared Goff', team: 'DET', bye: 6, pos: 'QB', proj: 275, adp: 135.2, health: 'CLEAN', note: 'High passing efficiency distributor in Detroit.' },
+      { rank: 136, posRank: 'QB19', name: 'Daniel Jones', team: 'IND', bye: 13, pos: 'QB', proj: 265, adp: 136.1, health: 'CLEAN', note: 'Dual-threat quarterback in Indianapolis.' },
+      { rank: 137, posRank: 'RB43', name: 'Zach Charbonnet', team: 'SEA', bye: 11, pos: 'RB', proj: 118, adp: 137.2, health: 'CLEAN', note: 'High-end contingency handcuff in Seattle.' },
+      { rank: 138, posRank: 'RB44', name: 'Tyjae Spears', team: 'TEN', bye: 9, pos: 'RB', proj: 116, adp: 138.1, health: 'CLEAN', note: 'High-efficiency change-of-pace runner with 3-down burst.' },
+      { rank: 139, posRank: 'RB45', name: 'Chris Rodriguez Jr.', team: 'JAC', bye: 7, pos: 'RB', proj: 114, adp: 139.2, health: 'CLEAN', note: 'Downhill interior runner in Jacksonville.' },
+      { rank: 140, posRank: 'RB46', name: 'Brian Robinson Jr.', team: 'ATL', bye: 11, pos: 'RB', proj: 112, adp: 140.1, health: 'CLEAN', note: 'Power running back in Atlanta.' },
+      { rank: 141, posRank: 'RB47', name: 'Tyler Allgeier', team: 'ARI', bye: 14, pos: 'RB', proj: 110, adp: 141.2, health: 'CLEAN', note: 'Direct goal-line backup in Arizona.' },
+      { rank: 142, posRank: 'RB48', name: 'MarShawn Lloyd', team: 'GB', bye: 11, pos: 'RB', proj: 108, adp: 142.1, health: 'CLEAN', note: 'Explosive runner in Green Bay backfield.' },
+      { rank: 143, posRank: 'WR58', name: 'Denzel Boston', team: 'CLE', bye: 11, pos: 'WR', proj: 108, adp: 143.2, health: 'CLEAN', note: 'Rookie boundary receiver in Cleveland.' },
+      { rank: 144, posRank: 'WR59', name: 'Jerry Jeudy', team: 'CLE', bye: 11, pos: 'WR', proj: 106, adp: 144.1, health: 'CLEAN', note: 'Route technician on perimeter.' },
+      { rank: 145, posRank: 'WR60', name: 'Calvin Ridley', team: 'TEN', bye: 9, pos: 'WR', proj: 105, adp: 145.2, health: 'CLEAN', note: 'Boundary deep target in Tennessee.' },
+      { rank: 146, posRank: 'WR61', name: 'Adonai Mitchell', team: 'NYJ', bye: 13, pos: 'WR', proj: 104, adp: 146.1, health: 'CLEAN', note: 'Explosive vertical boundary threat in New York.' },
+      { rank: 147, posRank: 'WR62', name: 'Travis Hunter', team: 'JAC', bye: 7, pos: 'WR', proj: 102, adp: 147.2, health: 'CLEAN', note: 'Two-way rookie sensation in Jacksonville.' },
+      { rank: 148, posRank: 'WR63', name: 'Caleb Douglas', team: 'MIA', bye: 6, pos: 'WR', proj: 100, adp: 148.1, health: 'CLEAN', note: 'Speed weapon in Miami.' },
+      { rank: 149, posRank: 'QB20', name: 'Baker Mayfield', team: 'TB', bye: 10, pos: 'QB', proj: 270, adp: 149.2, health: 'CLEAN', note: 'Gritty starter with strong downfield passing in Tampa.' },
+      { rank: 150, posRank: 'QB21', name: 'Malik Willis', team: 'MIA', bye: 6, pos: 'QB', proj: 250, adp: 150.1, health: 'CLEAN', note: 'Dual-threat quarterback in Miami.' },
+      { rank: 151, posRank: 'WR64', name: 'Jordyn Tyson', team: 'NO', bye: 8, pos: 'WR', proj: 98, adp: 151.2, health: 'OUT/PUP', riskReason: 'Hamstring surgery recovery; on Reserve/PUP list.', note: 'High-upside boundary receiver on PUP.' },
+      { rank: 152, posRank: 'WR65', name: 'Tre Tucker', team: 'LV', bye: 13, pos: 'WR', proj: 96, adp: 152.1, health: 'CLEAN', note: 'Blazing speed slot runner for Raiders.' },
+      { rank: 153, posRank: 'WR66', name: 'Jalen Nailor', team: 'LV', bye: 13, pos: 'WR', proj: 95, adp: 153.2, health: 'CLEAN', note: 'Speedy WR in Las Vegas.' },
+      { rank: 154, posRank: 'RB49', name: 'Keaton Mitchell', team: 'LAC', bye: 7, pos: 'RB', proj: 105, adp: 154.1, health: 'CLEAN', note: 'Breakaway speed weapon for Chargers.' },
+      { rank: 155, posRank: 'RB50', name: 'Isiah Pacheco', team: 'DET', bye: 6, pos: 'RB', proj: 104, adp: 155.2, health: 'CLEAN', note: 'Downhill physical runner in Detroit.' },
+      { rank: 156, posRank: 'RB51', name: 'Jonah Coleman', team: 'DEN', bye: 10, pos: 'RB', proj: 102, adp: 156.1, health: 'CLEAN', note: 'Rookie physical runner in Denver.' },
+      { rank: 157, posRank: 'RB52', name: 'Mike Washington Jr.', team: 'LV', bye: 13, pos: 'RB', proj: 100, adp: 157.2, health: 'CLEAN', note: 'Rookie back in Las Vegas.' },
+      { rank: 158, posRank: 'RB53', name: 'Braelon Allen', team: 'NYJ', bye: 13, pos: 'RB', proj: 98, adp: 158.1, health: 'CLEAN', note: 'Massive physical hammer behind Breece Hall.' },
+      { rank: 159, posRank: 'TE19', name: 'Kenyon Sadiq', team: 'NYJ', bye: 13, pos: 'TE', proj: 105, adp: 159.2, health: 'CLEAN', note: 'Rookie tight end in New York.' },
+      { rank: 160, posRank: 'TE20', name: 'Juwan Johnson', team: 'NO', bye: 8, pos: 'TE', proj: 104, adp: 160.1, health: 'CLEAN', note: 'Converted wideout red zone threat in New Orleans.' },
+
+      // --- RANKINGS 161 - 200 (Includes Defense & Kicker Tier 1) ---
+      { rank: 161, posRank: 'WR67', name: 'Keenan Allen', team: 'IND', bye: 13, pos: 'WR', proj: 95, adp: 161.2, health: 'CLEAN', note: 'Veteran master slot separator and chain mover.' },
+      { rank: 162, posRank: 'WR68', name: 'Rashod Bateman', team: 'BAL', bye: 13, pos: 'WR', proj: 94, adp: 162.1, health: 'CLEAN', note: 'Downfield boundary threat in Baltimore.' },
+      { rank: 163, posRank: 'WR69', name: 'Dontayvion Wicks', team: 'PHI', bye: 10, pos: 'WR', proj: 92, adp: 163.2, health: 'CLEAN', note: 'High-efficiency route separator in Philadelphia.' },
+      { rank: 164, posRank: 'WR70', name: 'Devaughn Vele', team: 'NO', bye: 8, pos: 'WR', proj: 90, adp: 164.1, health: 'CLEAN', note: 'Big-bodied possession target.' },
+      { rank: 165, posRank: 'WR71', name: 'Jaylin Noel', team: 'HOU', bye: 8, pos: 'WR', proj: 88, adp: 165.2, health: 'CLEAN', note: 'Rookie slot playmaker in Houston.' },
+      { rank: 166, posRank: 'RB54', name: 'Tank Bigsby', team: 'PHI', bye: 10, pos: 'RB', proj: 96, adp: 166.1, health: 'CLEAN', note: 'Inside runner with power in Philadelphia.' },
+      { rank: 167, posRank: 'RB55', name: 'Ray Davis', team: 'BUF', bye: 7, pos: 'RB', proj: 95, adp: 167.2, health: 'CLEAN', note: 'Physical goal-line complement to James Cook in Buffalo.' },
+      { rank: 168, posRank: 'RB56', name: 'Dylan Sampson', team: 'CLE', bye: 11, pos: 'RB', proj: 94, adp: 168.1, health: 'CLEAN', note: 'Rookie runner in Cleveland backfield.' },
+      
+      // Top ESPN Defenses
+      { rank: 169, posRank: 'DST1', name: 'Texans D/ST', team: 'HOU', bye: 8, pos: 'DST', proj: 125, adp: 169.2, health: 'CLEAN', note: 'ESPN DST1. Demeco Ryans pass rush and turnover defense.' },
+      { rank: 170, posRank: 'DST2', name: 'Broncos D/ST', team: 'DEN', bye: 10, pos: 'DST', proj: 122, adp: 170.1, health: 'CLEAN', note: 'Vance Joseph aggressive blitzing front in Denver.' },
+      { rank: 171, posRank: 'DST3', name: 'Steelers D/ST', team: 'PIT', bye: 9, pos: 'DST', proj: 120, adp: 171.2, health: 'CLEAN', note: 'TJ Watt elite sack floor and defensive scoring.' },
+      { rank: 172, posRank: 'DST4', name: 'Seahawks D/ST', team: 'SEA', bye: 11, pos: 'DST', proj: 118, adp: 172.1, health: 'CLEAN', note: 'Mike Macdonald disciplined defensive scheme.' },
+      { rank: 173, posRank: 'DST5', name: 'Rams D/ST', team: 'LAR', bye: 11, pos: 'DST', proj: 116, adp: 173.2, health: 'CLEAN', note: 'Young explosive defensive front in LA.' },
+      { rank: 174, posRank: 'DST6', name: 'Ravens D/ST', team: 'BAL', bye: 13, pos: 'DST', proj: 115, adp: 174.1, health: 'CLEAN', note: 'Perennial top fantasy defense in Baltimore.' },
+      { rank: 175, posRank: 'DST7', name: 'Eagles D/ST', team: 'PHI', bye: 10, pos: 'DST', proj: 114, adp: 175.2, health: 'CLEAN', note: 'Vic Fangio defensive secondary and front.' },
+      { rank: 176, posRank: 'DST8', name: 'Browns D/ST', team: 'CLE', bye: 11, pos: 'DST', proj: 113, adp: 176.1, health: 'CLEAN', note: 'Myles Garrett dominant pass rush unit.' },
+      { rank: 177, posRank: 'DST9', name: 'Patriots D/ST', team: 'NE', bye: 11, pos: 'DST', proj: 112, adp: 177.2, health: 'CLEAN', note: 'Disciplined turnover-generating defense in NE.' },
+      { rank: 178, posRank: 'DST10', name: 'Lions D/ST', team: 'DET', bye: 6, pos: 'DST', proj: 111, adp: 178.1, health: 'CLEAN', note: 'Aidan Hutchinson pass rush in Detroit.' },
+      { rank: 179, posRank: 'DST11', name: 'Chiefs D/ST', team: 'KC', bye: 5, pos: 'DST', proj: 110, adp: 179.2, health: 'CLEAN', note: 'Steve Spagnuolo championship caliber unit.' },
+      { rank: 180, posRank: 'DST12', name: 'Chargers D/ST', team: 'LAC', bye: 7, pos: 'DST', proj: 109, adp: 180.1, health: 'CLEAN', note: 'Jesse Minter physical defense in LA.' },
+
+      // Top ESPN Kickers
+      { rank: 181, posRank: 'K1', name: 'Brandon Aubrey', team: 'DAL', bye: 14, pos: 'K', proj: 152, adp: 181.2, health: 'CLEAN', note: 'ESPN K1. Unmatched 50+ yard field goal leg.' },
+      { rank: 182, posRank: 'K2', name: 'Cameron Dicker', team: 'LAC', bye: 7, pos: 'K', proj: 148, adp: 182.1, health: 'CLEAN', note: 'Harbaugh field position and high conversion accuracy.' },
+      { rank: 183, posRank: 'K3', name: 'Jason Myers', team: 'SEA', bye: 11, pos: 'K', proj: 145, adp: 183.2, health: 'CLEAN', note: 'Consistent scoring opportunities in Seattle.' },
+      { rank: 184, posRank: 'K4', name: 'Harrison Mevis', team: 'LAR', bye: 11, pos: 'K', proj: 144, adp: 184.1, health: 'CLEAN', note: 'High-octane McVay offense drives field goals.' },
+      { rank: 185, posRank: 'K5', name: "Ka'imi Fairbairn", team: 'HOU', bye: 8, pos: 'K', proj: 142, adp: 185.2, health: 'CLEAN', note: 'Houston offense provides frequent FG tries.' },
+      { rank: 186, posRank: 'K6', name: 'Eddy Pineiro', team: 'SF', bye: 8, pos: 'K', proj: 140, adp: 186.1, health: 'CLEAN', note: '49ers offensive engine drives red zone opportunities.' },
+      { rank: 187, posRank: 'K7', name: 'Harrison Butker', team: 'KC', bye: 5, pos: 'K', proj: 139, adp: 187.2, health: 'CLEAN', note: 'Reliable weapon for Mahomes and Chiefs.' },
+      { rank: 188, posRank: 'K8', name: 'Cam Little', team: 'JAC', bye: 7, pos: 'K', proj: 138, adp: 188.1, health: 'CLEAN', note: 'Strong-legged placekicker in Jacksonville.' },
+      { rank: 189, posRank: 'K9', name: 'Jake Bates', team: 'DET', bye: 6, pos: 'K', proj: 137, adp: 189.2, health: 'CLEAN', note: 'High scoring Lions offense creates scoring baseline.' },
+      { rank: 190, posRank: 'K10', name: 'Tyler Loop', team: 'BAL', bye: 13, pos: 'K', proj: 136, adp: 190.1, health: 'CLEAN', note: 'Reliable placekicker in Baltimore.' },
+      { rank: 191, posRank: 'K11', name: 'Cairo Santos', team: 'CHI', bye: 10, pos: 'K', proj: 135, adp: 191.2, health: 'CLEAN', note: 'Consistent kicker in Chicago.' },
+      { rank: 192, posRank: 'K12', name: 'Will Reichard', team: 'MIN', bye: 6, pos: 'K', proj: 134, adp: 192.1, health: 'CLEAN', note: 'Accurate young kicker in Minnesota.' },
+
+      // Back to Skills
+      { rank: 193, posRank: 'RB57', name: 'Najee Harris', team: 'NYG', bye: 8, pos: 'RB', proj: 92, adp: 193.2, health: 'CLEAN', note: 'Volume grinder with inside power in NY.' },
+      { rank: 194, posRank: 'TE21', name: 'Brenton Strange', team: 'JAC', bye: 7, pos: 'TE', proj: 95, adp: 194.1, health: 'CLEAN', note: 'Tight end target in Jacksonville.' },
+      { rank: 195, posRank: 'RB58', name: 'Alvin Kamara', team: 'NO', bye: 8, pos: 'RB', proj: 90, adp: 195.2, health: 'RISK', riskReason: 'Recovering from MCL sprain and veteran maintenance protocol.', note: 'PPR receiving weapon in New Orleans.' },
+      { rank: 196, posRank: 'RB59', name: 'Justice Hill', team: 'BAL', bye: 13, pos: 'RB', proj: 88, adp: 196.1, health: 'CLEAN', note: 'Third-down protection and receiving staple in Baltimore.' },
+      { rank: 197, posRank: 'WR72', name: "Ja'Kobi Lane", team: 'BAL', bye: 13, pos: 'WR', proj: 86, adp: 197.2, health: 'CLEAN', note: 'Rookie wideout for Ravens.' },
+      { rank: 198, posRank: 'QB22', name: 'Jordan Love', team: 'GB', bye: 11, pos: 'QB', proj: 260, adp: 198.1, health: 'CLEAN', note: 'Starting signal caller with deep young weapon set in Green Bay.' },
+      { rank: 199, posRank: 'QB23', name: 'C.J. Stroud', team: 'HOU', bye: 8, pos: 'QB', proj: 265, adp: 199.2, health: 'CLEAN', note: 'Elite passing accuracy with Nico Collins in Houston.' },
+      { rank: 200, posRank: 'QB24', name: 'Sam Darnold', team: 'SEA', bye: 11, pos: 'QB', proj: 245, adp: 200.1, health: 'CLEAN', note: 'Experienced distributor in Seattle system.' },
+
+      // --- RANKINGS 201 - 240 ---
+      { rank: 201, posRank: 'WR73', name: 'Jauan Jennings', team: 'MIN', bye: 6, pos: 'WR', proj: 85, adp: 201.2, health: 'CLEAN', note: 'Third-down conversion machine in Minnesota.' },
+      { rank: 202, posRank: 'WR74', name: 'Tank Dell', team: 'HOU', bye: 8, pos: 'WR', proj: 84, adp: 202.1, health: 'CLEAN', note: 'Electric separator and deep-threat weapon for Stroud.' },
+      { rank: 203, posRank: 'WR75', name: 'Germie Bernard', team: 'PIT', bye: 9, pos: 'WR', proj: 82, adp: 203.2, health: 'CLEAN', note: 'Rookie wideout in Pittsburgh.' },
+      { rank: 204, posRank: 'WR76', name: 'Tre Harris', team: 'LAC', bye: 7, pos: 'WR', proj: 80, adp: 204.1, health: 'CLEAN', note: 'Big-bodied target in Chargers offense.' },
+      { rank: 205, posRank: 'WR77', name: 'Ryan Flournoy', team: 'DAL', bye: 14, pos: 'WR', proj: 78, adp: 205.2, health: 'CLEAN', note: 'Perimeter depth receiver in Dallas.' },
+      { rank: 206, posRank: 'TE22', name: 'Pat Freiermuth', team: 'PIT', bye: 9, pos: 'TE', proj: 88, adp: 206.1, health: 'CLEAN', note: 'Red zone target in Pittsburgh.' },
+      { rank: 207, posRank: 'TE23', name: 'Dalton Schultz', team: 'HOU', bye: 8, pos: 'TE', proj: 86, adp: 207.2, health: 'CLEAN', note: 'Trusted third-down target for Stroud in Houston.' },
+      { rank: 208, posRank: 'WR78', name: 'Zachariah Branch', team: 'ATL', bye: 11, pos: 'WR', proj: 76, adp: 208.1, health: 'CLEAN', note: 'Speedster in Atlanta.' },
+      { rank: 209, posRank: 'WR79', name: 'Omar Cooper Jr.', team: 'NYJ', bye: 13, pos: 'WR', proj: 75, adp: 209.2, health: 'CLEAN', note: 'Rookie wideout in NY.' },
+      { rank: 210, posRank: 'WR80', name: 'Kayshon Boutte', team: 'HOU', bye: 8, pos: 'WR', proj: 74, adp: 210.1, health: 'CLEAN', note: 'Depth receiver in Houston.' },
+      { rank: 211, posRank: 'WR81', name: 'Malik Washington', team: 'MIA', bye: 6, pos: 'WR', proj: 72, adp: 211.2, health: 'CLEAN', note: 'Slot weapon in Miami.' },
+      { rank: 212, posRank: 'RB60', name: 'Jordan James', team: 'SF', bye: 8, pos: 'RB', proj: 82, adp: 212.1, health: 'CLEAN', note: 'Rookie runner in Shanahan system.' },
+      { rank: 213, posRank: 'RB61', name: 'Kaelon Black', team: 'SF', bye: 8, pos: 'RB', proj: 80, adp: 213.2, health: 'CLEAN', note: 'Depth runner in SF.' },
+      { rank: 214, posRank: 'RB62', name: 'Kimani Vidal', team: 'LAC', bye: 7, pos: 'RB', proj: 78, adp: 214.1, health: 'CLEAN', note: 'High-density runner in Harbaugh system.' },
+      { rank: 215, posRank: 'TE24', name: 'Gunnar Helm', team: 'TEN', bye: 9, pos: 'TE', proj: 82, adp: 215.2, health: 'CLEAN', note: 'Rookie tight end in Tennessee.' },
+      { rank: 216, posRank: 'TE25', name: 'Chig Okonkwo', team: 'WAS', bye: 7, pos: 'TE', proj: 80, adp: 216.1, health: 'CLEAN', note: 'Explosive YAC tight end in Washington.' },
+      { rank: 217, posRank: 'TE26', name: 'AJ Barner', team: 'SEA', bye: 11, pos: 'TE', proj: 78, adp: 217.2, health: 'CLEAN', note: 'Physical blocking tight end in Seattle.' },
+      { rank: 218, posRank: 'QB25', name: 'Bryce Young', team: 'CAR', bye: 5, pos: 'QB', proj: 235, adp: 218.1, health: 'CLEAN', note: 'Starting quarterback in Carolina with upgraded targets.' },
+      { rank: 219, posRank: 'QB26', name: 'Cam Ward', team: 'TEN', bye: 9, pos: 'QB', proj: 230, adp: 219.2, health: 'CLEAN', note: 'Rookie dynamic quarterback in Tennessee.' },
+      { rank: 220, posRank: 'QB27', name: 'Jacoby Brissett', team: 'ARI', bye: 14, pos: 'QB', proj: 200, adp: 220.1, health: 'CLEAN', note: 'Dependable veteran spot starter.' },
+      { rank: 221, posRank: 'RB63', name: 'Jaylen Wright', team: 'MIA', bye: 6, pos: 'RB', proj: 76, adp: 221.2, health: 'CLEAN', note: 'Explosive runner in perimeter wide-zone system.' },
+      { rank: 222, posRank: 'RB64', name: 'Ollie Gordon II', team: 'MIA', bye: 6, pos: 'RB', proj: 75, adp: 222.1, health: 'CLEAN', note: 'Physical rookie runner in Miami.' },
+      { rank: 223, posRank: 'RB65', name: 'Samaje Perine', team: 'CIN', bye: 6, pos: 'RB', proj: 74, adp: 223.2, health: 'CLEAN', note: 'Reliable third down back in Cincinnati.' },
+      { rank: 224, posRank: 'WR82', name: 'Cooper Kupp', team: 'SEA', bye: 11, pos: 'WR', proj: 75, adp: 224.1, health: 'CLEAN', note: 'Veteran master route runner in Seattle.' },
+      { rank: 225, posRank: 'RB66', name: 'Ty Johnson', team: 'BUF', bye: 7, pos: 'RB', proj: 72, adp: 225.2, health: 'CLEAN', note: 'Change of pace runner for Bills.' },
+      { rank: 226, posRank: 'RB67', name: 'Isaiah Davis', team: 'NYJ', bye: 13, pos: 'RB', proj: 70, adp: 226.1, health: 'CLEAN', note: 'Inside reserve running back for Jets.' },
+      { rank: 227, posRank: 'WR83', name: 'Xavier Legette', team: 'CAR', bye: 5, pos: 'WR', proj: 72, adp: 227.2, health: 'CLEAN', note: 'Physical rookie alpha with deep speed.' },
+      { rank: 228, posRank: 'WR84', name: 'Jahan Dotson', team: 'ATL', bye: 11, pos: 'WR', proj: 70, adp: 228.1, health: 'CLEAN', note: 'Smooth route runner in Atlanta.' },
+      { rank: 229, posRank: 'WR85', name: 'Darius Slayton', team: 'NYG', bye: 8, pos: 'WR', proj: 68, adp: 229.2, health: 'CLEAN', note: 'Deep perimeter speed weapon in NY.' },
+      { rank: 230, posRank: 'WR86', name: 'Jalen Tolbert', team: 'MIA', bye: 6, pos: 'WR', proj: 66, adp: 230.1, health: 'CLEAN', note: 'Perimeter receiver in Miami.' },
+      { rank: 231, posRank: 'WR87', name: 'DeMario Douglas', team: 'NE', bye: 11, pos: 'WR', proj: 65, adp: 231.2, health: 'CLEAN', note: 'Agile slot playmaker for Patriots.' },
+      { rank: 232, posRank: 'WR88', name: 'Chris Bell', team: 'MIA', bye: 6, pos: 'WR', proj: 64, adp: 232.1, health: 'CLEAN', note: 'Rookie wideout in Miami.' },
+      { rank: 233, posRank: 'WR89', name: 'Antonio Williams', team: 'WAS', bye: 7, pos: 'WR', proj: 62, adp: 233.2, health: 'CLEAN', note: 'Slot receiver in Washington.' },
+      { rank: 234, posRank: 'WR90', name: 'Tyquan Thornton', team: 'KC', bye: 5, pos: 'WR', proj: 60, adp: 234.1, health: 'CLEAN', note: 'Speed receiver in Kansas City.' },
+      { rank: 235, posRank: 'DST13', name: 'Buccaneers D/ST', team: 'TB', bye: 10, pos: 'DST', proj: 105, adp: 235.2, health: 'CLEAN', note: 'Todd Bowles blitz-heavy defense in Tampa.' },
+      { rank: 236, posRank: 'DST14', name: 'Packers D/ST', team: 'GB', bye: 11, pos: 'DST', proj: 104, adp: 236.1, health: 'CLEAN', note: 'Ball-hawking secondary in Green Bay.' },
+      { rank: 237, posRank: 'K13', name: 'Chris Boswell', team: 'PIT', bye: 9, pos: 'K', proj: 130, adp: 237.2, health: 'CLEAN', note: 'Veteran clutch field goal specialist in Pittsburgh.' },
+      { rank: 238, posRank: 'K14', name: 'Chase McLaughlin', team: 'TB', bye: 10, pos: 'K', proj: 128, adp: 238.1, health: 'CLEAN', note: 'High conversion kicker in Tampa.' },
+      { rank: 239, posRank: 'RB68', name: 'Jaydon Blue', team: 'DAL', bye: 14, pos: 'RB', proj: 68, adp: 239.2, health: 'CLEAN', note: 'Rookie back in Dallas.' },
+      { rank: 240, posRank: 'RB69', name: 'Kaytron Allen', team: 'WAS', bye: 7, pos: 'RB', proj: 66, adp: 240.1, health: 'CLEAN', note: 'Rookie physical runner in Washington.' },
+
+      // --- RANKINGS 241 - 300 ---
+      { rank: 241, posRank: 'RB70', name: 'Tyrone Tracy Jr.', team: 'NYG', bye: 8, pos: 'RB', proj: 65, adp: 241.2, health: 'CLEAN', note: 'Converted wideout with electric receiving upside.' },
+      { rank: 242, posRank: 'RB71', name: 'Nicholas Singleton', team: 'TEN', bye: 9, pos: 'RB', proj: 64, adp: 242.1, health: 'CLEAN', note: 'Rookie runner in Tennessee.' },
+      { rank: 243, posRank: 'RB72', name: 'Demond Claiborne', team: 'MIN', bye: 6, pos: 'RB', proj: 62, adp: 243.2, health: 'CLEAN', note: 'Rookie back in Minnesota.' },
+      { rank: 244, posRank: 'RB73', name: 'Adam Randall', team: 'BAL', bye: 13, pos: 'RB', proj: 60, adp: 244.1, health: 'CLEAN', note: 'Rookie runner in Baltimore.' },
+      { rank: 245, posRank: 'RB74', name: 'Emmett Johnson', team: 'KC', bye: 5, pos: 'RB', proj: 58, adp: 245.2, health: 'CLEAN', note: 'Rookie back in KC.' },
+      { rank: 246, posRank: 'RB75', name: 'LeQuint Allen', team: 'JAC', bye: 7, pos: 'RB', proj: 56, adp: 246.1, health: 'CLEAN', note: 'Rookie back in Jacksonville.' },
+      { rank: 247, posRank: 'RB76', name: 'George Holani', team: 'SEA', bye: 11, pos: 'RB', proj: 55, adp: 247.2, health: 'CLEAN', note: 'Physical runner in Seattle.' },
+      { rank: 248, posRank: 'RB77', name: 'Sean Tucker', team: 'TB', bye: 10, pos: 'RB', proj: 54, adp: 248.1, health: 'CLEAN', note: 'Speed depth runner in Tampa.' },
+      { rank: 249, posRank: 'RB78', name: 'James Conner', team: 'ARI', bye: 14, pos: 'RB', proj: 52, adp: 249.2, health: 'CLEAN', note: 'Veteran goal line back in Arizona.' },
+      { rank: 250, posRank: 'RB79', name: 'Emari Demercado', team: 'KC', bye: 5, pos: 'RB', proj: 50, adp: 250.1, health: 'CLEAN', note: 'Third-down pass protector in KC.' },
+      { rank: 251, posRank: 'RB80', name: 'Seth McGowan', team: 'IND', bye: 13, pos: 'RB', proj: 48, adp: 251.2, health: 'CLEAN', note: 'Rookie back in Indianapolis.' },
+      { rank: 252, posRank: 'WR91', name: 'Keon Coleman', team: 'BUF', bye: 7, pos: 'WR', proj: 55, adp: 252.1, health: 'CLEAN', note: 'Big-bodied contested target for Josh Allen.' },
+      { rank: 253, posRank: 'WR92', name: 'Isaac TeSlaa', team: 'DET', bye: 6, pos: 'WR', proj: 52, adp: 253.2, health: 'CLEAN', note: 'Rookie receiver in Detroit.' },
+      { rank: 254, posRank: 'DST15', name: 'Jaguars D/ST', team: 'JAC', bye: 7, pos: 'DST', proj: 102, adp: 254.1, health: 'CLEAN', note: 'Turnover generating defense in Jacksonville.' },
+      { rank: 255, posRank: 'DST16', name: 'Saints D/ST', team: 'NO', bye: 8, pos: 'DST', proj: 100, adp: 255.2, health: 'CLEAN', note: 'Aggressive defensive unit in New Orleans.' },
+      { rank: 256, posRank: 'K15', name: 'Evan McPherson', team: 'CIN', bye: 6, pos: 'K', proj: 125, adp: 256.1, health: 'CLEAN', note: 'Clutch kicker for Bengals.' },
+      { rank: 257, posRank: 'K16', name: 'Nick Folk', team: 'ATL', bye: 11, pos: 'K', proj: 122, adp: 257.2, health: 'CLEAN', note: 'Veteran accurate kicker in Atlanta.' },
+      { rank: 258, posRank: 'TE27', name: 'Greg Dulcich', team: 'MIA', bye: 6, pos: 'TE', proj: 65, adp: 258.1, health: 'CLEAN', note: 'Pass-catching tight end in Miami.' },
+      { rank: 259, posRank: 'TE28', name: 'Darren Waller', team: 'CAR', bye: 5, pos: 'TE', proj: 62, adp: 259.2, health: 'CLEAN', note: 'Veteran red zone mismatch in Carolina.' },
+      { rank: 260, posRank: 'TE29', name: 'Cade Otton', team: 'TB', bye: 10, pos: 'TE', proj: 60, adp: 260.1, health: 'CLEAN', note: 'Every-down tight end for Tampa.' },
+      { rank: 261, posRank: 'WR93', name: 'Pat Bryant', team: 'DEN', bye: 10, pos: 'WR', proj: 48, adp: 261.2, health: 'CLEAN', note: 'Rookie receiver in Denver.' },
+      { rank: 262, posRank: 'WR94', name: 'Darnell Mooney', team: 'NYG', bye: 8, pos: 'WR', proj: 46, adp: 262.1, health: 'CLEAN', note: 'Speed separator in New York.' },
+      { rank: 263, posRank: 'WR95', name: 'Marvin Mims Jr.', team: 'DEN', bye: 10, pos: 'WR', proj: 45, adp: 263.2, health: 'CLEAN', note: 'Speedster with return ability in Denver.' },
+      { rank: 264, posRank: 'WR96', name: 'Malachi Fields', team: 'NYG', bye: 8, pos: 'WR', proj: 44, adp: 264.1, health: 'CLEAN', note: 'Rookie boundary receiver in NY.' },
+      { rank: 265, posRank: 'RB81', name: 'Chris Brooks', team: 'GB', bye: 11, pos: 'RB', proj: 45, adp: 265.2, health: 'CLEAN', note: 'Physical depth back in Green Bay.' },
+      { rank: 266, posRank: 'RB82', name: 'Emanuel Wilson', team: 'SEA', bye: 11, pos: 'RB', proj: 44, adp: 266.1, health: 'CLEAN', note: 'Power runner in Seattle.' },
+      { rank: 267, posRank: 'QB28', name: 'Geno Smith', team: 'NYJ', bye: 13, pos: 'QB', proj: 215, adp: 267.2, health: 'CLEAN', note: 'Veteran distributor in New York.' },
+      { rank: 268, posRank: 'QB29', name: 'Fernando Mendoza', team: 'LV', bye: 13, pos: 'QB', proj: 200, adp: 268.1, health: 'CLEAN', note: 'Rookie quarterback in Las Vegas.' },
+      { rank: 269, posRank: 'QB30', name: 'Aaron Rodgers', team: 'PIT', bye: 9, pos: 'QB', proj: 210, adp: 269.2, health: 'CLEAN', note: 'Veteran pocket commander in Pittsburgh.' },
+      { rank: 270, posRank: 'QB31', name: 'Deshaun Watson', team: 'CLE', bye: 11, pos: 'QB', proj: 205, adp: 270.1, health: 'CLEAN', note: 'Veteran quarterback in Cleveland.' },
+      { rank: 271, posRank: 'WR97', name: 'KaVontae Turpin', team: 'DAL', bye: 14, pos: 'WR', proj: 42, adp: 271.2, health: 'CLEAN', note: 'All-Pro returner with gadget touches.' },
+      { rank: 272, posRank: 'WR98', name: 'Jack Bech', team: 'LV', bye: 13, pos: 'WR', proj: 40, adp: 272.1, health: 'CLEAN', note: 'Rookie receiver in Las Vegas.' },
+      { rank: 273, posRank: 'WR99', name: 'Tory Horton', team: 'SEA', bye: 11, pos: 'WR', proj: 38, adp: 273.2, health: 'CLEAN', note: 'Rookie wideout in Seattle.' },
+      { rank: 274, posRank: 'WR100', name: 'Ted Hurst', team: 'TB', bye: 10, pos: 'WR', proj: 36, adp: 274.1, health: 'CLEAN', note: 'Rookie target in Tampa.' },
+      { rank: 275, posRank: 'WR101', name: 'Andrei Iosivas', team: 'CIN', bye: 6, pos: 'WR', proj: 35, adp: 275.2, health: 'CLEAN', note: 'Athletic red-zone weapon in Cincinnati.' },
+      { rank: 276, posRank: 'RB83', name: 'Will Shipley', team: 'PHI', bye: 10, pos: 'RB', proj: 40, adp: 276.1, health: 'CLEAN', note: 'Dual-threat pass catcher behind Saquon.' },
+      { rank: 277, posRank: 'RB84', name: 'Malik Davis', team: 'DAL', bye: 14, pos: 'RB', proj: 38, adp: 277.2, health: 'CLEAN', note: 'Depth runner in Dallas.' },
+      { rank: 278, posRank: 'RB85', name: 'Kendre Miller', team: 'NO', bye: 8, pos: 'RB', proj: 36, adp: 278.1, health: 'CLEAN', note: 'Young back in New Orleans.' },
+      { rank: 279, posRank: 'RB86', name: 'Tahj Brooks', team: 'CIN', bye: 6, pos: 'RB', proj: 35, adp: 279.2, health: 'CLEAN', note: 'Rookie power runner in Cincinnati.' },
+      { rank: 280, posRank: 'RB87', name: 'Trevor Etienne', team: 'CAR', bye: 5, pos: 'RB', proj: 34, adp: 280.1, health: 'CLEAN', note: 'Rookie runner in Carolina.' },
+      { rank: 281, posRank: 'RB88', name: 'DJ Giddens', team: 'IND', bye: 13, pos: 'RB', proj: 32, adp: 281.2, health: 'CLEAN', note: 'Rookie back in Indianapolis.' },
+      { rank: 282, posRank: 'RB89', name: 'Jawhar Jordan', team: 'HOU', bye: 8, pos: 'RB', proj: 30, adp: 282.1, health: 'CLEAN', note: 'Speed runner in Houston.' },
+      { rank: 283, posRank: 'RB90', name: 'Kaleb Johnson', team: 'PIT', bye: 9, pos: 'RB', proj: 28, adp: 283.2, health: 'CLEAN', note: 'Rookie physical runner in Pittsburgh.' },
+      { rank: 284, posRank: 'WR102', name: 'Mack Hollins', team: 'NE', bye: 11, pos: 'WR', proj: 30, adp: 284.1, health: 'CLEAN', note: 'Physical blocker and red zone weapon in NE.' },
+      { rank: 285, posRank: 'DST17', name: 'Bears D/ST', team: 'CHI', bye: 10, pos: 'DST', proj: 98, adp: 285.2, health: 'CLEAN', note: 'Turnover defense in Chicago.' },
+      { rank: 286, posRank: 'DST18', name: 'Jets D/ST', team: 'NYJ', bye: 13, pos: 'DST', proj: 96, adp: 286.1, health: 'CLEAN', note: 'Solid defensive front in New York.' },
+      { rank: 287, posRank: 'K17', name: 'Trey Smack', team: 'GB', bye: 11, pos: 'K', proj: 118, adp: 287.2, health: 'CLEAN', note: 'Young kicker in Green Bay.' },
+      { rank: 288, posRank: 'K18', name: 'Jake Elliott', team: 'PHI', bye: 10, pos: 'K', proj: 116, adp: 288.1, health: 'CLEAN', note: 'Veteran accurate kicker in Philadelphia.' },
+      { rank: 289, posRank: 'TE30', name: 'Evan Engram', team: 'DEN', bye: 10, pos: 'TE', proj: 55, adp: 289.2, health: 'CLEAN', note: 'Pass catching veteran tight end in Denver.' },
+      { rank: 290, posRank: 'TE31', name: 'David Njoku', team: 'LAC', bye: 7, pos: 'TE', proj: 54, adp: 290.1, health: 'CLEAN', note: 'Athletic tight end in Los Angeles.' },
+      { rank: 291, posRank: 'TE32', name: 'Oronde Gadsden', team: 'LAC', bye: 7, pos: 'TE', proj: 52, adp: 291.2, health: 'CLEAN', note: 'Rookie receiving weapon in LA.' },
+      { rank: 292, posRank: 'TE33', name: 'Mike Gesicki', team: 'CIN', bye: 6, pos: 'TE', proj: 50, adp: 292.1, health: 'CLEAN', note: 'Slot mismatch weapon in Cincinnati.' },
+      { rank: 293, posRank: 'TE34', name: 'Michael Mayer', team: 'LV', bye: 13, pos: 'TE', proj: 48, adp: 293.2, health: 'CLEAN', note: 'Two-way tight end in Las Vegas.' },
+      { rank: 294, posRank: 'WR103', name: 'Tutu Atwell', team: 'MIA', bye: 6, pos: 'WR', proj: 28, adp: 294.1, health: 'CLEAN', note: 'Speedster in Miami space offense.' },
+      { rank: 295, posRank: 'WR104', name: 'Cyrus Allen', team: 'KC', bye: 5, pos: 'WR', proj: 26, adp: 295.2, health: 'CLEAN', note: 'Rookie receiver in Kansas City.' },
+      { rank: 296, posRank: 'QB32', name: 'Tua Tagovailoa', team: 'ATL', bye: 11, pos: 'QB', proj: 195, adp: 296.1, health: 'CLEAN', note: 'Quick-release distributor in Atlanta.' },
+      { rank: 297, posRank: 'DST19', name: '49ers D/ST', team: 'SF', bye: 8, pos: 'DST', proj: 94, adp: 297.2, health: 'CLEAN', note: 'Physical defensive front in SF.' },
+      { rank: 298, posRank: 'DST20', name: 'Cowboys D/ST', team: 'DAL', bye: 14, pos: 'DST', proj: 92, adp: 298.1, health: 'CLEAN', note: 'Playmaking defense in Dallas.' },
+      { rank: 299, posRank: 'DST21', name: 'Colts D/ST', team: 'IND', bye: 13, pos: 'DST', proj: 90, adp: 299.2, health: 'CLEAN', note: 'Turnover front in Indianapolis.' },
+      { rank: 300, posRank: 'DST22', name: 'Vikings D/ST', team: 'MIN', bye: 6, pos: 'DST', proj: 88, adp: 300.0, health: 'CLEAN', note: 'Brian Flores chaotic blitz scheme in Minnesota.' }
+    ];
+
+    function generateFullESPN300PlayerDatabase() {
+      return ESPN_TOP_300_SEED.map((p) => {
+        let tier = 1;
+        if (p.rank > 200) tier = 5;
+        else if (p.rank > 120) tier = 4;
+        else if (p.rank > 60) tier = 3;
+        else if (p.rank > 20) tier = 2;
+
+        return {
+          ...p,
+          id: `p_${p.rank}_${p.name.replace(/[^a-zA-Z0-9]/g, '')}`,
+          tier: tier
+        };
+      });
+    }
+
+    /* --- GLOBAL STATE --- */
+    const TOTAL_TEAMS = 12;
+    const TOTAL_ROUNDS = 17;
+    const TOTAL_PICKS = TOTAL_TEAMS * TOTAL_ROUNDS; // 204 picks
+
+    let PLAYER_DATABASE = generateFullESPN300PlayerDatabase();
+    let draftedPlayerIds = new Set();
+    let draftHistory = [];
+    let userSlot = 1;
+    let currentPosFilter = 'ALL';
+    let currentHealthFilter = 'ALL';
+    let activeLeftTab = 'advisor';
+    let activeBoardView = 'stream';
+    let currentSearchTerm = '';
+    let currentSortBy = 'ADP';
+    const geminiApiKey = "";
+
+    /* --- RISK SEVERITY ANALYSIS ALGORITHM --- */
+    function getRiskSeverityAnalysis(player, overallPick) {
+      if (player.health === 'CLEAN') return null;
+
+      const pick = overallPick || (getCurrentPickIndex() + 1);
+      const adpDiff = pick - player.adp;
+
+      let severity = 'MODERATE';
+      let severityClass = 'text-amber-400 bg-amber-500/10 border-amber-500/30';
+      let title = 'Calculated Risk';
+      let advisory = '';
+
+      if (player.health === 'OUT/PUP' || player.health === 'SUSP') {
+        severity = pick < 100 ? 'CRITICAL / PROHIBITIVE' : 'ACCEPTABLE BENCH STASH';
+        severityClass = pick < 100 ? 'text-rose-400 bg-rose-500/20 border-rose-500/40' : 'text-purple-400 bg-purple-500/20 border-purple-500/40';
+        title = player.health === 'SUSP' ? 'Suspension Risk' : 'IR/PUP Inactive Risk';
+        advisory = pick < 100 
+          ? `Drafting an inactive player at Pick #${pick} burns a vital starting roster slot. Strongly avoid before Round 9+.`
+          : 'Viable late-round stash if you have already secured starting lineup depth.';
+      } else if (pick <= 6) {
+        severity = 'EXTREME OPPORTUNITY COST';
+        severityClass = 'text-rose-400 bg-rose-500/20 border-rose-500/40';
+        title = 'High-Stakes Fragility';
+        advisory = `Selecting ${player.name} at Pick #${pick} carries severe downside when 100% healthy Tier-1 bellcows (Gibbs, Bijan, Chase) are on the board.`;
+      } else if (pick <= 24) {
+        if (adpDiff >= 4) {
+          severity = 'MODERATE (DISCOUNT PRICED)';
+          severityClass = 'text-amber-300 bg-amber-500/20 border-amber-500/40';
+          title = 'Discounted Ceiling';
+          advisory = `At Pick #${pick}, ${player.name} has fallen past baseline ADP (${player.adp}). The discount offsets injury volatility—draft with a direct backup plan.`;
+        } else {
+          severity = 'HIGH VOLATILITY';
+          severityClass = 'text-amber-400 bg-amber-500/20 border-amber-500/40';
+          title = 'Elevated Risk';
+          advisory = `At Pick #${pick}, you bear full injury exposure. Ensure you lock in a healthy, high-floor starter with your next turn.`;
+        }
+      } else if (pick <= 75) {
+        severity = adpDiff >= 6 ? 'FAVORABLE UPSIDE VALUE' : 'MODERATE RISK';
+        severityClass = adpDiff >= 6 ? 'text-emerald-400 bg-emerald-500/10 border-emerald-500/30' : 'text-amber-400 bg-amber-500/10 border-amber-500/30';
+        title = 'Calculated Upside';
+        advisory = 'Middle-round risk is mitigated by starting lineup insulation. Value is strong if your roster has a safe floor.';
+      } else {
+        severity = 'LOW RISK / FREE UPSIDE';
+        severityClass = 'text-emerald-400 bg-emerald-500/10 border-emerald-500/30';
+        title = 'Late-Round Upside Flier';
+        advisory = `Negligible opportunity cost at Pick #${pick}. If healthy, provides tournament-winning weekly ceiling.`;
+      }
+
+      return {
+        severity: severity,
+        severityClass: severityClass,
+        title: title,
+        reason: player.riskReason || player.note || 'Managing physical ailments or volatile injury track record.',
+        advisory: advisory
+      };
+    }
+
+    /* --- PICK CALCULATIONS & HELPERS --- */
+    function getCurrentPickIndex() {
+      return draftHistory.length;
+    }
+
+    function getPickDetails(pickIndex) {
+      if (pickIndex >= TOTAL_PICKS) {
+        return { round: TOTAL_ROUNDS, pickInRound: TOTAL_TEAMS, overallPick: TOTAL_PICKS, teamSlot: 12, isUserTurn: false, isComplete: true };
+      }
+      const round = Math.floor(pickIndex / TOTAL_TEAMS) + 1;
+      const pickInRound = (pickIndex % TOTAL_TEAMS) + 1;
+      const overallPick = pickIndex + 1;
+      
+      // Snake order calculation
+      let teamSlot;
+      if (round % 2 === 1) {
+        // Odd rounds: 1 to 12
+        teamSlot = pickInRound;
+      } else {
+        // Even rounds: 12 down to 1
+        teamSlot = TOTAL_TEAMS - pickInRound + 1;
+      }
+      
+      const isUserTurn = (teamSlot === userSlot);
+      return { round, pickInRound, overallPick, teamSlot, isUserTurn, isComplete: false };
+    }
+
+    function getPicksUntilUserTurn() {
+      const currentIdx = getCurrentPickIndex();
+      if (currentIdx >= TOTAL_PICKS) return 0;
+      
+      for (let i = currentIdx; i < TOTAL_PICKS; i++) {
+        const details = getPickDetails(i);
+        if (details.teamSlot === userSlot) {
+          return i - currentIdx;
+        }
+      }
+      return 0;
+    }
+
+    function getPosColorClass(pos) {
+      switch (pos) {
+        case 'QB': return 'text-rose-400 bg-rose-500/10 border-rose-500/30';
+        case 'RB': return 'text-emerald-400 bg-emerald-500/10 border-emerald-500/30';
+        case 'WR': return 'text-cyan-400 bg-cyan-500/10 border-cyan-500/30';
+        case 'TE': return 'text-amber-400 bg-amber-500/10 border-amber-500/30';
+        case 'K':  return 'text-purple-400 bg-purple-500/10 border-purple-500/30';
+        case 'DST': return 'text-blue-400 bg-blue-500/10 border-blue-500/30';
+        default: return 'text-slate-400 bg-slate-500/10 border-slate-500/30';
+      }
+    }
+
+    /* --- TEAM ROSTER EXTRACTION --- */
+    function getTeamRoster(teamNum) {
+      const picks = draftHistory.filter(h => h.teamIndex === teamNum);
+      const players = picks.map(p => p.player);
+      
+      const qbs = players.filter(p => p.pos === 'QB');
+      const rbs = players.filter(p => p.pos === 'RB');
+      const wrs = players.filter(p => p.pos === 'WR');
+      const tes = players.filter(p => p.pos === 'TE');
+      const ks = players.filter(p => p.pos === 'K');
+      const dsts = players.filter(p => p.pos === 'DST');
+
+      return {
+        teamNum,
+        picks: players,
+        qbs, rbs, wrs, tes, ks, dsts,
+        total: players.length
+      };
+    }
+
+    /* --- REALISTIC HUMAN AI SIMULATION ENGINE --- */
+    function getAiDraftChoice(teamSlot, currentPickIdx) {
+      const currentRound = Math.floor(currentPickIdx / TOTAL_TEAMS) + 1;
+      const teamRoster = getTeamRoster(teamSlot);
+      const available = PLAYER_DATABASE.filter(p => !draftedPlayerIds.has(p.id));
+      if (available.length === 0) return null;
+
+      // Assign realistic human drafter archetypes and preferred QB draft windows
+      // Slot 1, 5, 9: Elite QB Hunter (R3-R5)
+      // Slot 2, 6, 10: Mid-Round QB Target (R6-R8)
+      // Slot 3, 7, 11: Late-Round Value QB (R9-R11)
+      // Slot 4, 8, 12: Late Streaming QB (R12-R14)
+      const qbWindowByType = {
+        'ELITE_QB': { minRd: 3, idealRd: 4 },
+        'MID_QB':   { minRd: 6, idealRd: 7 },
+        'LATE_QB':  { minRd: 9, idealRd: 10 },
+        'STREAM_QB':{ minRd: 12, idealRd: 13 }
+      };
+
+      const archetypes = [
+        { strat: 'HERO_RB', qbPlan: 'ELITE_QB' },
+        { strat: 'ROBUST_WR', qbPlan: 'MID_QB' },
+        { strat: 'ZERO_RB', qbPlan: 'LATE_QB' },
+        { strat: 'BALANCED_BPA', qbPlan: 'STREAM_QB' },
+        { strat: 'ELITE_QB_TE', qbPlan: 'ELITE_QB' },
+        { strat: 'BALANCED_BPA', qbPlan: 'MID_QB' },
+        { strat: 'HERO_RB', qbPlan: 'LATE_QB' },
+        { strat: 'ROBUST_WR', qbPlan: 'STREAM_QB' },
+        { strat: 'ZERO_RB', qbPlan: 'MID_QB' },
+        { strat: 'BALANCED_BPA', qbPlan: 'LATE_QB' },
+        { strat: 'HERO_RB', qbPlan: 'STREAM_QB' },
+        { strat: 'ELITE_QB_TE', qbPlan: 'ELITE_QB' }
+      ];
+
+      const drafterProfile = archetypes[(teamSlot - 1) % archetypes.length];
+      const qbWindow = qbWindowByType[drafterProfile.qbPlan];
+
+      // Anti-cluster detection: count QBs drafted in the last 3 picks
+      const recentPicks = draftHistory.slice(-3);
+      const recentQBsDrafted = recentPicks.filter(h => h.player.pos === 'QB').length;
+
+      // Strict late-round rules for Kickers and DSTs (restricted to final 2 rounds)
+      const isLateRoundKickerDstWindow = (currentRound >= 16);
+
+      const scoredCandidates = available.map(p => {
+        // Value Over Replacement Player (VORP) calculation
+        let vorp = 0;
+        if (p.pos === 'QB') vorp = Math.max(0, p.proj - 280);      // QB replacement: ~280 pts
+        else if (p.pos === 'RB') vorp = Math.max(0, p.proj - 130); // RB replacement: ~130 pts
+        else if (p.pos === 'WR') vorp = Math.max(0, p.proj - 130); // WR replacement: ~130 pts
+        else if (p.pos === 'TE') vorp = Math.max(0, p.proj - 120); // TE replacement: ~120 pts
+        else vorp = 10;
+
+        // Base score anchored on consensus ADP and normalized VORP
+        let score = (320 - p.adp) + (vorp * 0.9);
+
+        // --- REALISTIC 1-QB SIMULATION LOGIC ---
+        if (p.pos === 'QB') {
+          if (currentRound < 3) {
+            score -= 600; // Hard prohibition: No QBs in Rounds 1-2 in 1-QB leagues
+          } else if (teamRoster.qbs.length === 0) {
+            // Drafter pacing according to archetype
+            if (currentRound < qbWindow.minRd) {
+              // Not yet at this drafter's target window
+              score -= 120;
+            } else if (currentRound >= qbWindow.minRd && currentRound <= qbWindow.idealRd + 1) {
+              // In the sweet spot window for this drafter
+              score += 45;
+            }
+
+            // Anti-Cluster throttle: If 2 QBs were just picked, pivot to falling WR/RB
+            if (recentQBsDrafted >= 1) {
+              score -= (recentQBsDrafted * 55);
+            }
+          } else {
+            // Already has starting QB: strictly no backup QB until Round 13+
+            if (currentRound < 13) score -= 500;
+            else score -= 90;
+          }
+        }
+
+        // --- TIGHT END DISCIPLINE ---
+        if (p.pos === 'TE') {
+          if (teamRoster.tes.length === 0) {
+            if (p.tier === 1 && currentRound >= 2 && currentRound <= 4) {
+              score += 40;
+            } else if (currentRound >= 5 && currentRound <= 9) {
+              score += 25;
+            }
+          } else {
+            // Already has starting TE: no backup until Round 13+
+            if (currentRound < 13) score -= 500;
+            else score -= 90;
+          }
+        }
+
+        // --- RUNNING BACK DISCIPLINE ---
+        if (p.pos === 'RB') {
+          if (teamRoster.rbs.length === 0) {
+            if (drafterProfile.strat === 'HERO_RB' || drafterProfile.strat === 'BALANCED_BPA') score += 55;
+            else if (drafterProfile.strat === 'ZERO_RB' && currentRound <= 4) score -= 70;
+          } else if (teamRoster.rbs.length === 1) {
+            if (drafterProfile.strat === 'HERO_RB' && currentRound <= 4) score -= 20;
+            else score += 35;
+          } else if (teamRoster.rbs.length >= 2 && currentRound <= 6) {
+            score -= 15;
+          }
+        }
+
+        // --- WIDE RECEIVER DISCIPLINE ---
+        if (p.pos === 'WR') {
+          if (drafterProfile.strat === 'ZERO_RB' || drafterProfile.strat === 'ROBUST_WR') {
+            if (teamRoster.wrs.length < 3) score += 50;
+          } else if (teamRoster.wrs.length < 2) {
+            score += 35;
+          }
+        }
+
+        // --- KICKER & DST DISCIPLINE (Rounds 16-17 Only) ---
+        if (p.pos === 'K' || p.pos === 'DST') {
+          if (!isLateRoundKickerDstWindow) {
+            score -= 900; // Impossible to draft before final 2 rounds
+          } else {
+            const alreadyHas = (p.pos === 'K' && teamRoster.ks.length > 0) || (p.pos === 'DST' && teamRoster.dsts.length > 0);
+            if (alreadyHas) score -= 700;
+            else score += 200;
+          }
+        }
+
+        // Injury / Inactive penalty
+        if (p.health === 'OUT/PUP' || p.health === 'SUSP') score -= 200;
+        else if (p.health === 'RISK' && currentRound <= 3) score -= 45;
+
+        return { player: p, score: score };
+      });
+
+      scoredCandidates.sort((a, b) => b.score - a.score);
+      return scoredCandidates[0] ? scoredCandidates[0].player : available[0];
+    }
+
+    /* --- USER RECOMMENDATION ENGINE --- */
+    function getRecommendedPicks(count = 3) {
+      const currentPick = getPickDetails(getCurrentPickIndex());
+      const round = currentPick.round;
+      const myRoster = getTeamRoster(userSlot);
+      const available = PLAYER_DATABASE.filter(p => !draftedPlayerIds.has(p.id));
+      if (available.length === 0) return [];
+
+      const remainingQBs = available.filter(p => p.pos === 'QB');
+      const remainingRBs = available.filter(p => p.pos === 'RB');
+      const remainingWRs = available.filter(p => p.pos === 'WR');
+      const remainingTEs = available.filter(p => p.pos === 'TE');
+
+      const isLateRoundKickerDst = (round >= 16);
+
+      const scored = available.map(p => {
+        // Compute VORP
+        let vorp = 0;
+        if (p.pos === 'QB') vorp = Math.max(0, p.proj - 280);
+        else if (p.pos === 'RB') vorp = Math.max(0, p.proj - 130);
+        else if (p.pos === 'WR') vorp = Math.max(0, p.proj - 130);
+        else if (p.pos === 'TE') vorp = Math.max(0, p.proj - 120);
+        else vorp = 10;
+
+        let score = (300 - p.adp) + (vorp * 0.95);
+        let rationale = 'High Consensus Value';
+
+        // Calculate available rank at position
+        let availPosRank = 1;
+        if (p.pos === 'QB') availPosRank = remainingQBs.indexOf(p) + 1;
+        else if (p.pos === 'RB') availPosRank = remainingRBs.indexOf(p) + 1;
+        else if (p.pos === 'WR') availPosRank = remainingWRs.indexOf(p) + 1;
+        else if (p.pos === 'TE') availPosRank = remainingTEs.indexOf(p) + 1;
+
+        // Position & Roster-aware weighting
+        if (p.pos === 'QB') {
+          if (round < 3) {
+            score -= 500; // Prohibit QBs in rounds 1 and 2
+            rationale = 'Avoid early QB; elite RB/WR anchors provide superior VORP';
+          } else if (myRoster.qbs.length === 0) {
+            if (p.tier === 1 && round >= 3 && round <= 5) {
+              score += 45;
+              rationale = `Elite Dual-Threat QB advantage (${p.name})`;
+            } else if (round >= 6 && round <= 9) {
+              score += 35;
+              rationale = 'Solidifying primary starting QB slot';
+            } else if (round >= 10) {
+              score += 25;
+              rationale = 'Late-round starting QB value';
+            }
+          } else {
+            score -= (round < 12 ? 350 : 80);
+            rationale = 'Backup QB; starting lineup slots take priority';
+          }
+        } else if (p.pos === 'RB') {
+          if (myRoster.rbs.length === 0) {
+            score += 65;
+            rationale = `Anchor RB1 (${p.name}) • 3-down touch monopoly`;
+          } else if (myRoster.rbs.length === 1) {
+            score += 50;
+            rationale = `Solidifying RB2 backfield depth (${p.name})`;
+          } else if (myRoster.rbs.length < 4) {
+            score += 25;
+            rationale = 'High-leverage Flex / RB insurance';
+          }
+        } else if (p.pos === 'WR') {
+          if (myRoster.wrs.length < 2) {
+            score += 55;
+            rationale = `Alpha WR target funnel (${p.name})`;
+          } else if (myRoster.wrs.length < 4) {
+            score += 35;
+            rationale = 'High-volume starting Flex pass-catcher';
+          }
+        } else if (p.pos === 'TE') {
+          if (myRoster.tes.length === 0) {
+            if (p.tier === 1 && round >= 2) {
+              score += 50;
+              rationale = `Positional game-breaker at Tight End (${p.name})`;
+            } else if (round >= 5) {
+              score += 30;
+              rationale = 'Securing top-tier starting Tight End';
+            }
+          } else {
+            score -= (round < 12 ? 350 : 80);
+            rationale = 'Backup TE; prioritize RB/WR depth';
+          }
+        } else if (p.pos === 'K' || p.pos === 'DST') {
+          if (!isLateRoundKickerDst) {
+            score -= 900;
+            rationale = 'Save K/DST exclusively for final 2 rounds';
+          } else {
+            const alreadyHas = (p.pos === 'K' && myRoster.ks.length > 0) || (p.pos === 'DST' && myRoster.dsts.length > 0);
+            if (alreadyHas) score -= 600;
+            else {
+              score += 150;
+              rationale = `Lock in starting ${p.pos} for Week 1`;
+            }
+          }
+        }
+
+        // ADP differential value bonus
+        const adpValueDiff = currentPick.overallPick - p.adp;
+        if (adpValueDiff > 3) {
+          score += (adpValueDiff * 2.5);
+          rationale += ` • Value fall (+${adpValueDiff.toFixed(1)} vs ADP)`;
+        }
+
+        // Injury / Risk deduction
+        if (p.health === 'OUT/PUP' || p.health === 'SUSP') {
+          score -= 180;
+        } else if (p.health === 'RISK') {
+          score -= (round <= 3 ? 35 : 15);
+        }
+
+        return {
+          ...p,
+          recommendationScore: score,
+          reason: rationale,
+          availPosRank: availPosRank,
+          adpValueDiff: adpValueDiff.toFixed(1)
+        };
+      });
+
+      scored.sort((a, b) => b.recommendationScore - a.recommendationScore);
+      return scored.slice(0, count);
+    }
+
+    /* --- UI RENDERING FUNCTIONS --- */
+    function updateAllUI() {
+      renderTopBanner();
+      renderAdvisor();
+      renderPlayerPool();
+      renderDraftStream();
+      renderSnakeMatrix();
+      renderMyRoster();
+      renderOpponentsModal();
+    }
+
+    function renderTopBanner() {
+      const pickIdx = getCurrentPickIndex();
+      const current = getPickDetails(pickIdx);
+
+      const pickLabel = document.getElementById('currentPickLabel');
+      const teamLabel = document.getElementById('currentTeamLabel');
+      const onTheClockBadge = document.getElementById('onTheClockBadge');
+      const totalPicksCount = document.getElementById('totalPicksCount');
+
+      if (totalPicksCount) totalPicksCount.textContent = pickIdx;
+
+      if (current.isComplete) {
+        if (pickLabel) pickLabel.textContent = 'Draft Complete';
+        if (teamLabel) teamLabel.textContent = 'Completed (204 Picks)';
+        if (onTheClockBadge) onTheClockBadge.classList.add('hidden');
+        return;
+      }
+
+      if (pickLabel) {
+        pickLabel.textContent = `Round ${current.round}, Pick ${current.pickInRound} (${current.round}.${current.pickInRound < 10 ? '0' + current.pickInRound : current.pickInRound})`;
+      }
+
+      if (teamLabel) {
+        teamLabel.textContent = current.isUserTurn ? `Team ${current.teamSlot} (YOU)` : `Team ${current.teamSlot}`;
+        teamLabel.className = current.isUserTurn ? 'text-emerald-400 font-black' : 'text-cyan-300 font-bold';
+      }
+
+      if (onTheClockBadge) {
+        if (current.isUserTurn) {
+          onTheClockBadge.classList.remove('hidden');
+          onTheClockBadge.classList.add('flex');
+        } else {
+          onTheClockBadge.classList.add('hidden');
+          onTheClockBadge.classList.remove('flex');
+        }
+      }
+    }
+
+    function renderAdvisor() {
+      const recList = document.getElementById('recommendationsList');
+      const nextTurnPill = document.getElementById('nextTurnPill');
+      const scarcitySummaryText = document.getElementById('scarcitySummaryText');
+      const scarcityPills = document.getElementById('scarcityPills');
+
+      const current = getPickDetails(getCurrentPickIndex());
+      const picksUntil = getPicksUntilUserTurn();
+
+      if (nextTurnPill) {
+        if (current.isUserTurn) {
+          nextTurnPill.textContent = "⚡ You are ON THE CLOCK";
+          nextTurnPill.className = "text-[10px] font-mono font-black px-2.5 py-0.5 rounded-full bg-emerald-500 text-slate-950 glow-pulse";
+        } else {
+          nextTurnPill.textContent = `Next turn in: ${picksUntil} pick${picksUntil === 1 ? '' : 's'}`;
+          nextTurnPill.className = "text-[10px] font-mono font-bold px-2 py-0.5 rounded-full bg-slate-900 border border-slate-700 text-slate-300";
+        }
+      }
+
+      const recs = getRecommendedPicks(3);
+      if (!recList) return;
+
+      if (recs.length === 0) {
+        recList.innerHTML = `<div class="p-4 rounded-xl bg-[#0a1224] text-center text-xs text-slate-400">Draft is completed or no available players remaining.</div>`;
+        return;
+      }
+
+      recList.innerHTML = recs.map((p, idx) => {
+        const badgeColor = getPosColorClass(p.pos);
+        const riskAnalysis = getRiskSeverityAnalysis(p, current.overallPick);
+
+        let healthBadgeHtml = '';
+        if (p.health === 'RISK') {
+          healthBadgeHtml = `<button onclick="window.openRiskModal('${p.id}')" class="bg-amber-500/20 hover:bg-amber-500/30 text-amber-300 text-[9px] font-bold px-1.5 py-0.2 rounded border border-amber-500/30 transition flex items-center gap-1"><i class="fa-solid fa-triangle-exclamation text-[8px]"></i> RISK</button>`;
+        } else if (p.health === 'SUSP') {
+          healthBadgeHtml = `<button onclick="window.openRiskModal('${p.id}')" class="bg-purple-500/20 hover:bg-purple-500/30 text-purple-300 text-[9px] font-bold px-1.5 py-0.2 rounded border border-purple-500/30 transition flex items-center gap-1"><i class="fa-solid fa-ban text-[8px]"></i> SUSP</button>`;
+        } else if (p.health === 'OUT/PUP') {
+          healthBadgeHtml = `<button onclick="window.openRiskModal('${p.id}')" class="bg-rose-500/20 hover:bg-rose-500/30 text-rose-300 text-[9px] font-bold px-1.5 py-0.2 rounded border border-rose-500/30 transition flex items-center gap-1"><i class="fa-solid fa-user-xmark text-[8px]"></i> OUT</button>`;
+        }
+
+        let riskBannerHtml = '';
+        if (riskAnalysis) {
+          riskBannerHtml = `
+            <div class="mt-1 p-1.5 rounded-lg border text-[10px] ${riskAnalysis.severityClass} flex items-start justify-between gap-1.5">
+              <div><span class="font-bold font-mono">⚠️ ${riskAnalysis.severity}:</span> ${riskAnalysis.reason}</div>
+              <button onclick="window.openRiskModal('${p.id}')" class="underline hover:text-white shrink-0 font-bold ml-1">Details</button>
+            </div>
+          `;
+        }
+
+        return `
+          <div class="bg-[#0b1428] hover:bg-[#0f1b36] border ${idx === 0 ? 'border-emerald-500/50 shadow-lg shadow-emerald-950/30' : 'border-[#172545]'} rounded-2xl p-3 transition flex flex-col gap-2">
+            <div class="flex items-start justify-between gap-2">
+              <div class="flex items-center gap-2 min-w-0">
+                <span class="w-5 h-5 rounded-full bg-emerald-500/20 text-emerald-400 flex items-center justify-center font-black text-[10px] shrink-0">#${idx + 1}</span>
+                <div class="min-w-0">
+                  <div class="flex items-center gap-1.5 flex-wrap">
+                    <span class="font-bold text-xs text-slate-100 truncate">${p.name}</span>
+                    <span class="text-[9px] font-bold px-1.5 py-0.2 rounded border ${badgeColor}">${p.pos}</span>
+                    <span class="text-[9px] font-bold px-1.5 py-0.2 rounded bg-indigo-950/80 text-indigo-300 border border-indigo-700/40">Avail ${p.pos}#${p.availPosRank}</span>
+                    <span class="text-[10px] text-slate-400">${p.team}</span>
+                    ${healthBadgeHtml}
+                  </div>
+                  <div class="text-[10px] text-emerald-400 font-semibold mt-0.5">${p.reason}</div>
+                </div>
+              </div>
+              <button onclick="window.draftPlayer('${p.id}')" class="px-3 py-1.5 bg-emerald-600 hover:bg-emerald-500 text-white font-bold text-xs rounded-xl shadow-md transition flex items-center gap-1 shrink-0">
+                <i class="fa-solid fa-check text-[10px]"></i> Draft Now
+              </button>
+            </div>
+            ${riskBannerHtml}
+            <div class="flex items-center justify-between text-[10px] font-mono text-slate-400 bg-[#070e1c] px-2.5 py-1 rounded-lg border border-[#142038]">
+              <span>ADP: <strong class="text-slate-200">${p.adp}</strong></span>
+              <span>Overall: <strong class="text-slate-200">#${p.rank}</strong></span>
+              <span>Proj: <strong class="text-slate-200">${p.proj}</strong> pts</span>
+              <span>Bye: <strong class="text-slate-200">Wk ${p.bye}</strong></span>
+            </div>
+          </div>
+        `;
+      }).join('');
+
+      // Scarcity text
+      if (scarcitySummaryText) {
+        const myRoster = getTeamRoster(userSlot);
+        if (myRoster.rbs.length === 0 && myRoster.wrs.length === 0) {
+          scarcitySummaryText.textContent = "Round 1 Anchor Phase: Prioritize high-touch Tier-1 bellcow RBs or alpha WR1s with clean health profiles.";
+        } else if (picksUntil >= 18) {
+          scarcitySummaryText.textContent = `Long snake turn wait (${picksUntil} picks). Anticiapte heavy RB/WR runs before your next pick. Take your highest conviction tier anchor.`;
+        } else if (myRoster.qbs.length === 0 && current.round >= 4 && current.round <= 7) {
+          scarcitySummaryText.textContent = "Elite QB Window: Tier-1 rushing quarterbacks provide substantial weekly positional advantage over the replacement baseline.";
+        } else {
+          scarcitySummaryText.textContent = "Board flow is steady. Best Player Available (BPA) with consideration to your starting Flex is optimal.";
+        }
+      }
+
+      if (scarcityPills) {
+        const myRoster = getTeamRoster(userSlot);
+        scarcityPills.innerHTML = `
+          <span class="px-2 py-0.5 rounded bg-[#070e1c] border border-[#142038] text-rose-300">QB: ${myRoster.qbs.length}/1</span>
+          <span class="px-2 py-0.5 rounded bg-[#070e1c] border border-[#142038] text-emerald-300">RB: ${myRoster.rbs.length}/2</span>
+          <span class="px-2 py-0.5 rounded bg-[#070e1c] border border-[#142038] text-cyan-300">WR: ${myRoster.wrs.length}/2</span>
+          <span class="px-2 py-0.5 rounded bg-[#070e1c] border border-[#142038] text-amber-300">TE: ${myRoster.tes.length}/1</span>
+        `;
+      }
+    }
+
+    function renderPlayerPool() {
+      const container = document.getElementById('playerPoolList');
+      const countLabel = document.getElementById('availablePlayerCount');
+      if (!container) return;
+
+      const available = PLAYER_DATABASE.filter(p => !draftedPlayerIds.has(p.id));
+      if (countLabel) countLabel.textContent = available.length;
+
+      // Filter by Position
+      let filtered = available.filter(p => {
+        if (currentPosFilter === 'ALL') return true;
+        if (currentPosFilter === 'FLEX') return (p.pos === 'RB' || p.pos === 'WR' || p.pos === 'TE');
+        return p.pos === currentPosFilter;
+      });
+
+      // Filter by Health
+      if (currentHealthFilter === 'CLEAN') {
+        filtered = filtered.filter(p => p.health === 'CLEAN');
+      } else if (currentHealthFilter === 'RISK') {
+        filtered = filtered.filter(p => p.health !== 'CLEAN');
+      }
+
+      // Filter by Search text
+      if (currentSearchTerm.trim() !== '') {
+        const term = currentSearchTerm.toLowerCase();
+        filtered = filtered.filter(p => 
+          p.name.toLowerCase().includes(term) || 
+          p.team.toLowerCase().includes(term) || 
+          p.pos.toLowerCase().includes(term)
+        );
+      }
+
+      // Sort
+      if (currentSortBy === 'ADP') {
+        filtered.sort((a, b) => a.adp - b.adp);
+      } else if (currentSortBy === 'PROJ') {
+        filtered.sort((a, b) => b.proj - a.proj);
+      } else if (currentSortBy === 'RANK') {
+        filtered.sort((a, b) => a.rank - b.rank);
+      } else if (currentSortBy === 'TIER') {
+        filtered.sort((a, b) => a.tier - b.tier || a.adp - b.adp);
+      }
+
+      if (filtered.length === 0) {
+        container.innerHTML = `<div class="p-6 text-center text-xs text-slate-500 rounded-xl bg-[#091122]">No available players match the current filters.</div>`;
+        return;
+      }
+
+      // Render top 75 of filtered subset for smooth DOM performance
+      const renderedSubset = filtered.slice(0, 75);
+
+      container.innerHTML = renderedSubset.map(p => {
+        const badgeColor = getPosColorClass(p.pos);
+        let healthBadge = '';
+        if (p.health === 'RISK') {
+          healthBadge = `<button onclick="window.openRiskModal('${p.id}')" class="bg-amber-500/20 hover:bg-amber-500/30 text-amber-300 text-[9px] font-bold px-1.5 py-0.2 rounded border border-amber-500/30 transition flex items-center gap-1 cursor-pointer" title="Click for injury analysis"><i class="fa-solid fa-triangle-exclamation text-[8px]"></i> RISK</button>`;
+        } else if (p.health === 'SUSP') {
+          healthBadge = `<button onclick="window.openRiskModal('${p.id}')" class="bg-purple-500/20 hover:bg-purple-500/30 text-purple-300 text-[9px] font-bold px-1.5 py-0.2 rounded border border-purple-500/30 transition flex items-center gap-1 cursor-pointer"><i class="fa-solid fa-ban text-[8px]"></i> SUSP</button>`;
+        } else if (p.health === 'OUT/PUP') {
+          healthBadge = `<button onclick="window.openRiskModal('${p.id}')" class="bg-rose-500/20 hover:bg-rose-500/30 text-rose-300 text-[9px] font-bold px-1.5 py-0.2 rounded border border-rose-500/30 transition flex items-center gap-1 cursor-pointer"><i class="fa-solid fa-user-xmark text-[8px]"></i> OUT</button>`;
+        }
+
+        return `
+          <div class="bg-[#0b1428] hover:bg-[#0f1c38] border border-[#162444] rounded-xl p-2.5 transition flex items-center justify-between gap-2.5">
+            <div class="flex items-center gap-2.5 min-w-0">
+              <div class="w-9 h-9 rounded-lg bg-[#060c18] border border-[#142038] flex flex-col items-center justify-center text-center shrink-0">
+                <span class="text-[8px] text-slate-500 font-bold uppercase leading-none">ADP</span>
+                <span class="text-[11px] font-black text-slate-200 font-mono leading-tight">${p.adp}</span>
+              </div>
+              <div class="min-w-0">
+                <div class="flex items-center gap-1.5 flex-wrap">
+                  <span class="font-bold text-xs text-slate-100 truncate">${p.name}</span>
+                  <span class="text-[9px] font-bold px-1.5 py-0.2 rounded border ${badgeColor}">${p.pos}</span>
+                  <span class="text-[10px] text-slate-400 font-mono">${p.team}</span>
+                  <span class="text-[9px] text-slate-500">Bye ${p.bye}</span>
+                  ${healthBadge}
+                </div>
+                <p class="text-[10px] text-slate-400 truncate mt-0.5">${p.riskReason ? '⚠️ ' + p.riskReason : p.note}</p>
+              </div>
+            </div>
+            <div class="flex items-center gap-3 shrink-0">
+              <div class="text-right font-mono hidden sm:block">
+                <div class="text-xs font-bold text-slate-200">${p.proj} <span class="text-[9px] text-slate-400 font-sans">pts</span></div>
+                <div class="text-[9px] text-slate-500">Tier ${p.tier}</div>
+              </div>
+              <button onclick="window.draftPlayer('${p.id}')" class="px-2.5 py-1.5 bg-[#122040] hover:bg-emerald-600 hover:text-white text-emerald-400 text-xs font-bold rounded-lg border border-emerald-500/30 transition flex items-center gap-1">
+                <i class="fa-solid fa-plus text-[10px]"></i> Draft
+              </button>
+            </div>
+          </div>
+        `;
+      }).join('');
+    }
+
+    function renderDraftStream() {
+      const container = document.getElementById('draftStreamList');
+      if (!container) return;
+
+      if (draftHistory.length === 0) {
+        container.innerHTML = `
+          <div class="p-8 text-center rounded-2xl bg-[#091122] border border-[#162444] text-xs text-slate-400 space-y-2">
+            <div class="w-10 h-10 rounded-full bg-cyan-500/10 text-cyan-400 flex items-center justify-center mx-auto text-base">
+              <i class="fa-solid fa-play"></i>
+            </div>
+            <div class="font-bold text-slate-200">The Draft Has Not Started</div>
+            <p class="text-[11px] text-slate-500">Click "Sim Pick", "Sim to My Turn", or select a player from the center pool to record the first pick.</p>
+          </div>
+        `;
+        return;
+      }
+
+      // Show recent picks in reverse order
+      const reversed = [...draftHistory].reverse();
+
+      container.innerHTML = reversed.map(item => {
+        const isUser = (item.teamIndex === userSlot);
+        const badgeColor = getPosColorClass(item.player.pos);
+        const pickTag = `${item.round}.${item.pickInRound < 10 ? '0' + item.pickInRound : item.pickInRound}`;
+
+        return `
+          <div class="bg-[#0b1428] border ${isUser ? 'border-emerald-500/60 bg-emerald-950/10' : 'border-[#162444]'} rounded-xl p-2.5 flex items-center justify-between gap-2 text-xs">
+            <div class="flex items-center gap-2.5 min-w-0">
+              <span class="font-mono font-black text-slate-400 text-[11px] bg-[#060c18] px-2 py-1 rounded border border-[#142038]">${pickTag}</span>
+              <div class="min-w-0">
+                <div class="flex items-center gap-1.5 flex-wrap">
+                  <span class="font-bold text-slate-100 truncate">${item.player.name}</span>
+                  <span class="text-[9px] font-bold px-1.5 py-0.2 rounded border ${badgeColor}">${item.player.pos}</span>
+                  <span class="text-[10px] text-slate-400 font-mono">${item.player.team}</span>
+                </div>
+                <div class="text-[10px] ${isUser ? 'text-emerald-400 font-bold' : 'text-slate-500'}">Team ${item.teamIndex} ${isUser ? '(YOU)' : ''}</div>
+              </div>
+            </div>
+            <div class="text-right font-mono text-[10px] text-slate-400 shrink-0">
+              <span>Overall #${item.overallPick}</span>
+            </div>
+          </div>
+        `;
+      }).join('');
+    }
+
+    function renderSnakeMatrix() {
+      const container = document.getElementById('snakeMatrixContainer');
+      if (!container) return;
+
+      let html = '<table class="w-full text-[10px] border-collapse font-mono">';
+      
+      // Header with 12 Teams
+      html += '<thead><tr class="border-b border-[#182645] text-slate-400">';
+      html += '<th class="p-1.5 text-left w-10">Rd</th>';
+      for (let t = 1; t <= TOTAL_TEAMS; t++) {
+        const isUser = (t === userSlot);
+        html += `<th class="p-1.5 text-center ${isUser ? 'bg-emerald-500/20 text-emerald-300 font-black' : ''}">T${t}${isUser ? ' (You)' : ''}</th>`;
+      }
+      html += '</tr></thead><tbody>';
+
+      // Rows for all 17 rounds
+      for (let r = 1; r <= TOTAL_ROUNDS; r++) {
+        html += `<tr class="border-b border-[#121c33] hover:bg-[#0c1428]"><td class="p-1.5 font-bold text-slate-500">R${r}</td>`;
+        for (let t = 1; t <= TOTAL_TEAMS; t++) {
+          const isUser = (t === userSlot);
+          
+          // Determine which pick index maps to round r and team t
+          let pickInRound;
+          if (r % 2 === 1) {
+            pickInRound = t;
+          } else {
+            pickInRound = TOTAL_TEAMS - t + 1;
+          }
+          const overallPick = (r - 1) * TOTAL_TEAMS + pickInRound;
+          const pickIdx = overallPick - 1;
+
+          const historyItem = draftHistory[pickIdx];
+          const isCurrent = (pickIdx === getCurrentPickIndex());
+
+          if (historyItem) {
+            const p = historyItem.player;
+            const badgeColor = getPosColorClass(p.pos);
+            html += `<td class="p-1 text-center ${isUser ? 'bg-emerald-950/20' : ''}">
+              <div class="px-1 py-0.5 rounded border ${badgeColor} truncate max-w-[65px]" title="${p.name} (${p.pos}, ${p.team})">
+                ${p.name.split(' ').pop()}
+              </div>
+            </td>`;
+          } else if (isCurrent) {
+            html += `<td class="p-1 text-center bg-cyan-500/20 rounded animate-pulse">
+              <span class="text-cyan-300 font-black">#${overallPick}</span>
+            </td>`;
+          } else {
+            html += `<td class="p-1 text-center text-slate-600 ${isUser ? 'bg-emerald-950/10' : ''}">
+              ${overallPick}
+            </td>`;
+          }
+        }
+        html += '</tr>';
+      }
+
+      html += '</tbody></table>';
+      container.innerHTML = html;
+    }
+
+    function renderMyRoster() {
+      const startContainer = document.getElementById('userStartingLineupList');
+      const benchContainer = document.getElementById('userBenchList');
+      const rosterCountElem = document.getElementById('myRosterCount');
+      const starterPtsElem = document.getElementById('starterPointsSummary');
+      const benchCountElem = document.getElementById('benchCountSummary');
+
+      const myRoster = getTeamRoster(userSlot);
+      if (rosterCountElem) rosterCountElem.textContent = myRoster.picks.length;
+
+      const drafted = [...myRoster.picks];
+      
+      // Slot assignments: 1 QB, 2 RB, 2 WR, 1 TE, 1 FLEX, 1 K, 1 DST, Bench (up to 8)
+      let startingQB = null;
+      let startingRBs = [];
+      let startingWRs = [];
+      let startingTE = null;
+      let startingFLEX = null;
+      let startingK = null;
+      let startingDST = null;
+      let bench = [];
+
+      const remainingPool = [...drafted];
+
+      // Assign QB
+      const qbIdx = remainingPool.findIndex(p => p.pos === 'QB');
+      if (qbIdx !== -1) startingQB = remainingPool.splice(qbIdx, 1)[0];
+
+      // Assign RBs (up to 2)
+      for (let i = 0; i < 2; i++) {
+        const rbIdx = remainingPool.findIndex(p => p.pos === 'RB');
+        if (rbIdx !== -1) startingRBs.push(remainingPool.splice(rbIdx, 1)[0]);
+      }
+
+      // Assign WRs (up to 2)
+      for (let i = 0; i < 2; i++) {
+        const wrIdx = remainingPool.findIndex(p => p.pos === 'WR');
+        if (wrIdx !== -1) startingWRs.push(remainingPool.splice(wrIdx, 1)[0]);
+      }
+
+      // Assign TE
+      const teIdx = remainingPool.findIndex(p => p.pos === 'TE');
+      if (teIdx !== -1) startingTE = remainingPool.splice(teIdx, 1)[0];
+
+      // Assign FLEX (RB, WR, or TE)
+      const flexIdx = remainingPool.findIndex(p => p.pos === 'RB' || p.pos === 'WR' || p.pos === 'TE');
+      if (flexIdx !== -1) startingFLEX = remainingPool.splice(flexIdx, 1)[0];
+
+      // Assign K
+      const kIdx = remainingPool.findIndex(p => p.pos === 'K');
+      if (kIdx !== -1) startingK = remainingPool.splice(kIdx, 1)[0];
+
+      // Assign DST
+      const dstIdx = remainingPool.findIndex(p => p.pos === 'DST');
+      if (dstIdx !== -1) startingDST = remainingPool.splice(dstIdx, 1)[0];
+
+      // Rest are Bench
+      bench = remainingPool;
+
+      function renderSlot(slotName, player) {
+        if (!player) {
+          return `
+            <div class="p-2 rounded-xl bg-[#060c18] border border-dashed border-[#182645] flex items-center justify-between text-slate-500">
+              <span class="font-bold text-[10px] font-mono">${slotName}</span>
+              <span class="italic text-[10px]">Empty Slot</span>
+            </div>
+          `;
+        }
+        const badgeColor = getPosColorClass(player.pos);
+        return `
+          <div class="p-2 rounded-xl bg-[#080f1e] border border-[#16233d] flex items-center justify-between gap-2">
+            <div class="flex items-center gap-2 min-w-0">
+              <span class="font-bold text-[10px] font-mono text-slate-400 w-9">${slotName}</span>
+              <div class="truncate font-bold text-slate-100">${player.name}</div>
+              <span class="text-[9px] font-bold px-1.5 py-0.2 rounded border ${badgeColor}">${player.pos}</span>
+            </div>
+            <div class="text-right font-mono text-[10px] text-slate-400 shrink-0">
+              ${player.proj} pts
+            </div>
+          </div>
+        `;
+      }
+
+      if (startContainer) {
+        startContainer.innerHTML = `
+          ${renderSlot('QB', startingQB)}
+          ${renderSlot('RB1', startingRBs[0])}
+          ${renderSlot('RB2', startingRBs[1])}
+          ${renderSlot('WR1', startingWRs[0])}
+          ${renderSlot('WR2', startingWRs[1])}
+          ${renderSlot('TE', startingTE)}
+          ${renderSlot('FLEX', startingFLEX)}
+          ${renderSlot('K', startingK)}
+          ${renderSlot('DST', startingDST)}
+        `;
+      }
+
+      const totalStarterPts = [startingQB, ...startingRBs, ...startingWRs, startingTE, startingFLEX, startingK, startingDST]
+        .filter(Boolean)
+        .reduce((sum, p) => sum + p.proj, 0);
+
+      if (starterPtsElem) starterPtsElem.textContent = `Proj: ${totalStarterPts.toFixed(1)} pts`;
+
+      if (benchContainer) {
+        if (bench.length === 0) {
+          benchContainer.innerHTML = `<div class="p-3 text-center text-[11px] text-slate-500 italic bg-[#060c18] rounded-xl border border-dashed border-[#182645]">No bench players drafted yet.</div>`;
+        } else {
+          benchContainer.innerHTML = bench.map((p, i) => renderSlot(`BN${i + 1}`, p)).join('');
+        }
+      }
+
+      if (benchCountElem) benchCountElem.textContent = `${bench.length} / 8 slots`;
+    }
+
+    function renderOpponentsModal() {
+      const container = document.getElementById('opponentsRosterGrid');
+      if (!container) return;
+
+      let html = '';
+      for (let t = 1; t <= TOTAL_TEAMS; t++) {
+        const isUser = (t === userSlot);
+        const roster = getTeamRoster(t);
+
+        html += `
+          <div class="p-3 rounded-2xl bg-[#080f1e] border ${isUser ? 'border-emerald-500/50 ring-1 ring-emerald-500/30' : 'border-[#162444]'} flex flex-col gap-2">
+            <div class="flex items-center justify-between border-b border-[#142038] pb-1.5">
+              <span class="font-bold text-xs ${isUser ? 'text-emerald-300' : 'text-slate-200'}">Team ${t} ${isUser ? '(YOU)' : ''}</span>
+              <span class="text-[10px] font-mono text-slate-400">${roster.picks.length}/17 picks</span>
+            </div>
+            <div class="text-[10px] flex items-center justify-between text-slate-400 font-mono">
+              <span>QB: <strong class="text-slate-200">${roster.qbs.length}</strong></span>
+              <span>RB: <strong class="text-slate-200">${roster.rbs.length}</strong></span>
+              <span>WR: <strong class="text-slate-200">${roster.wrs.length}</strong></span>
+              <span>TE: <strong class="text-slate-200">${roster.tes.length}</strong></span>
+            </div>
+            <div class="space-y-1 pt-1 max-h-36 overflow-y-auto custom-scrollbar text-[11px]">
+              ${roster.picks.length === 0 ? '<div class="text-slate-600 italic text-[10px]">No picks yet</div>' : 
+                roster.picks.map(p => `
+                  <div class="flex items-center justify-between text-slate-300 bg-[#060c18] px-2 py-1 rounded border border-[#142038]">
+                    <span class="truncate font-semibold">${p.name}</span>
+                    <span class="text-[9px] font-bold text-slate-400">${p.pos} • ${p.team}</span>
+                  </div>
+                `).join('')
+              }
+            </div>
+          </div>
+        `;
+      }
+      container.innerHTML = html;
+    }
+
+    /* --- DRAFT ENGINE ACTIONS --- */
+    function draftPlayer(playerId) {
+      const currentIdx = getCurrentPickIndex();
+      if (currentIdx >= TOTAL_PICKS) return;
+
+      const player = PLAYER_DATABASE.find(p => p.id === playerId);
+      if (!player || draftedPlayerIds.has(playerId)) return;
+
+      const pickDetails = getPickDetails(currentIdx);
+
+      draftedPlayerIds.add(playerId);
+      draftHistory.push({
+        pickIndex: currentIdx,
+        round: pickDetails.round,
+        pickInRound: pickDetails.pickInRound,
+        overallPick: pickDetails.overallPick,
+        teamIndex: pickDetails.teamSlot,
+        player: player
+      });
+
+      updateAllUI();
+    }
+
+    function undoLastPick() {
+      if (draftHistory.length === 0) return;
+      const last = draftHistory.pop();
+      if (last && last.player) {
+        draftedPlayerIds.delete(last.player.id);
+      }
+      updateAllUI();
+    }
+
+    function simulateNextPick() {
+      const currentIdx = getCurrentPickIndex();
+      if (currentIdx >= TOTAL_PICKS) return;
+
+      const pickDetails = getPickDetails(currentIdx);
+      const choice = getAiDraftChoice(pickDetails.teamSlot, currentIdx);
+      if (choice) {
+        draftPlayer(choice.id);
+      }
+    }
+
+    function simulateToMyTurn() {
+      const currentIdx = getCurrentPickIndex();
+      if (currentIdx >= TOTAL_PICKS) return;
+
+      let loopCount = 0;
+      while (getCurrentPickIndex() < TOTAL_PICKS && loopCount < TOTAL_PICKS) {
+        const details = getPickDetails(getCurrentPickIndex());
+        if (details.teamSlot === userSlot) {
+          break; // Stop at user's turn
+        }
+        const choice = getAiDraftChoice(details.teamSlot, getCurrentPickIndex());
+        if (choice) {
+          draftedPlayerIds.add(choice.id);
+          draftHistory.push({
+            pickIndex: getCurrentPickIndex(),
+            round: details.round,
+            pickInRound: details.pickInRound,
+            overallPick: details.overallPick,
+            teamIndex: details.teamSlot,
+            player: choice
+          });
+        }
+        loopCount++;
+      }
+      updateAllUI();
+    }
+
+    /* --- MODAL DIALOG HANDLERS --- */
+    function openRiskModal(playerId) {
+      const player = PLAYER_DATABASE.find(p => p.id === playerId);
+      if (!player) return;
+
+      const pickDetails = getPickDetails(getCurrentPickIndex());
+      const riskInfo = getRiskSeverityAnalysis(player, pickDetails.overallPick);
+      if (!riskInfo) return;
+
+      const modal = document.getElementById('riskDetailModal');
+      const container = document.getElementById('riskModalContent');
+      const titleElem = document.getElementById('riskModalPlayerName');
+
+      if (titleElem) {
+        titleElem.innerHTML = `${player.name} <span class="text-xs font-normal text-slate-400">(${player.pos} • ${player.team})</span>`;
+      }
+
+      if (container) {
+        container.innerHTML = `
+          <div class="space-y-3.5">
+            <div class="flex items-center justify-between p-2.5 rounded-xl border ${riskInfo.severityClass}">
+              <div class="flex items-center gap-2">
+                <i class="fa-solid fa-triangle-exclamation text-base"></i>
+                <div>
+                  <div class="text-[10px] font-bold uppercase tracking-wider">Severity at Pick #${pickDetails.overallPick} (R${pickDetails.round}.${pickDetails.pickInRound < 10 ? '0' + pickDetails.pickInRound : pickDetails.pickInRound})</div>
+                  <div class="text-xs font-black font-mono">${riskInfo.severity}</div>
+                </div>
+              </div>
+              <span class="text-[10px] font-mono px-2 py-0.5 rounded bg-slate-900 border border-slate-700">ADP ${player.adp}</span>
+            </div>
+
+            <div class="bg-[#080f1e] p-3 rounded-xl border border-[#16233d] space-y-1.5">
+              <div class="text-xs font-bold text-slate-200 flex items-center gap-1.5">
+                <i class="fa-solid fa-notes-medical text-rose-400"></i> Medical / Situational Context:
+              </div>
+              <p class="text-xs text-slate-300 leading-relaxed">${riskInfo.reason}</p>
+            </div>
+
+            <div class="bg-[#080f1e] p-3 rounded-xl border border-[#16233d] space-y-1.5">
+              <div class="text-xs font-bold text-cyan-400 flex items-center gap-1.5">
+                <i class="fa-solid fa-chess-knight"></i> Advisor Analysis for Your Current Pick:
+              </div>
+              <p class="text-xs text-slate-300 leading-relaxed">${riskInfo.advisory}</p>
+            </div>
+
+            <div class="p-2.5 bg-indigo-950/30 border border-indigo-500/20 rounded-xl text-[11px] text-slate-400 flex items-center justify-between">
+              <span>Projected Points: <strong class="text-slate-100 font-mono">${player.proj}</strong> pts</span>
+              <span>Consensus Rank: <strong class="text-slate-100 font-mono">#${player.rank}</strong></span>
+              <span>Bye: <strong class="text-slate-100 font-mono">Wk ${player.bye}</strong></span>
+            </div>
+          </div>
+        `;
+      }
+
+      if (modal) {
+        modal.classList.remove('hidden');
+        modal.classList.add('flex');
+      }
+    }
+
+    function closeRiskModal() {
+      const modal = document.getElementById('riskDetailModal');
+      if (modal) {
+        modal.classList.add('hidden');
+        modal.classList.remove('flex');
+      }
+    }
+
+    function openSettingsModal() {
+      const modal = document.getElementById('settingsModal');
+      const grid = document.getElementById('slotSelectorGrid');
+      if (!modal) return;
+
+      if (grid) {
+        grid.innerHTML = Array.from({ length: TOTAL_TEAMS }, (_, i) => i + 1).map(slot => {
+          const isSelected = (slot === userSlot);
+          return `
+            <button onclick="window.selectDraftSlot(${slot})" class="py-2 rounded-xl text-xs font-black font-mono transition border ${isSelected ? 'bg-cyan-600 text-white border-cyan-400 shadow-md shadow-cyan-950' : 'bg-[#080f1e] text-slate-300 border-[#182645] hover:bg-[#121f3b]'}">
+              ${slot}
+            </button>
+          `;
+        }).join('');
+      }
+
+      modal.classList.remove('hidden');
+      modal.classList.add('flex');
+    }
+
+    function closeSettingsModal() {
+      const modal = document.getElementById('settingsModal');
+      if (modal) {
+        modal.classList.add('hidden');
+        modal.classList.remove('flex');
+      }
+    }
+
+    function selectDraftSlot(slot) {
+      userSlot = slot;
+      closeSettingsModal();
+      updateAllUI();
+    }
+
+    function openOpponentsModal() {
+      const modal = document.getElementById('opponentsModal');
+      renderOpponentsModal();
+      if (modal) {
+        modal.classList.remove('hidden');
+        modal.classList.add('flex');
+      }
+    }
+
+    function closeOpponentsModal() {
+      const modal = document.getElementById('opponentsModal');
+      if (modal) {
+        modal.classList.add('hidden');
+        modal.classList.remove('flex');
+      }
+    }
+
+    function openResetModal() {
+      const modal = document.getElementById('resetModal');
+      if (modal) {
+        modal.classList.remove('hidden');
+        modal.classList.add('flex');
+      }
+    }
+
+    function closeResetModal() {
+      const modal = document.getElementById('resetModal');
+      if (modal) {
+        modal.classList.add('hidden');
+        modal.classList.remove('flex');
+      }
+    }
+
+    function confirmResetDraft() {
+      draftedPlayerIds.clear();
+      draftHistory = [];
+      closeResetModal();
+      updateAllUI();
+    }
+
+    async function requestAiAnalysis() {
+      const modal = document.getElementById('aiModal');
+      const content = document.getElementById('aiModalContent');
+      if (!modal || !content) return;
+
+      modal.classList.remove('hidden');
+      modal.classList.add('flex');
+
+      content.innerHTML = `
+        <div class="p-8 text-center space-y-3">
+          <div class="w-10 h-10 border-2 border-cyan-500 border-t-transparent rounded-full animate-spin mx-auto"></div>
+          <p class="text-xs text-slate-300 font-bold">Synthesizing live draft dynamics with Gemini 3 Flash...</p>
+          <p class="text-[11px] text-slate-500">Evaluating 400 player pool, current roster composition, and turn risks...</p>
+        </div>
+      `;
+
+      const current = getPickDetails(getCurrentPickIndex());
+      const myRoster = getTeamRoster(userSlot);
+      const topRecs = getRecommendedPicks(3);
+
+      const prompt = `You are the lead strategist for DraftIQ live advisor in a 12-team snake draft.
+Current pick state: Round ${current.round}, Pick ${current.pickInRound} (Overall Pick #${current.overallPick}).
+User Draft Slot: Team ${userSlot}.
+User Current Roster: ${myRoster.picks.map(p => `${p.name} (${p.pos}, ${p.team})`).join(', ') || 'None (Round 1)'}.
+Top Suggested Available Options: ${topRecs.map(p => `${p.name} (${p.pos}, ADP ${p.adp}, Proj ${p.proj})`).join(', ')}.
+
+Provide a high-impact, 3-section fantasy advisor diagnosis:
+1. Optimal Pick Recommendation for Pick #${current.overallPick}.
+2. Positional Run & Sniper Alert before the user's next turn.
+3. Recommended contingency target if a run occurs.`;
+
+      try {
+        let aiText = '';
+        if (geminiApiKey) {
+          const apiUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-3-flash-preview:generateContent?key=${geminiApiKey}`;
+          const response = await fetch(apiUrl, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              contents: [{ parts: [{ text: prompt }] }],
+              systemInstruction: { parts: [{ text: "Act as an elite fantasy football draft expert. Give concise, actionable strategic advice." }] }
+            })
+          });
+          const result = await response.json();
+          aiText = result.candidates?.[0]?.content?.parts?.[0]?.text || '';
+        }
+
+        if (!aiText) {
+          // Heuristic fallback
+          const topTarget = topRecs[0] || { name: 'BPA Starter', pos: 'RB', team: 'NFL', proj: 260 };
+          aiText = `### 🎯 Primary Recommendation for Pick #${current.overallPick}
+**Target: ${topTarget.name} (${topTarget.pos}, ${topTarget.team})**
+- **Strategic Fit:** Anchors your starting lineup while offering peak VORP at consensus ADP.
+- **Roster Alignment:** Fits seamlessly into your current build (QB: ${myRoster.qbs.length}/1, RB: ${myRoster.rbs.length}/2, WR: ${myRoster.wrs.length}/2, TE: ${myRoster.tes.length}/1).
+
+### ⚡ Positional Scarcity & Turn Prediction
+- Teams picking between your current slot and your next turn will likely target starting skill players. Lock in your highest conviction tier now.
+
+### 🛡️ Contingency & Safety Plan
+- If your target is sniped, pivot directly to **${topRecs[1] ? topRecs[1].name : 'next available Tier-1/2 player'}** to preserve draft value.`;
+        }
+
+        content.innerHTML = `
+          <div class="space-y-3 text-xs leading-relaxed text-slate-300">
+            ${aiText.replace(/### (.*)/g, '<h4 class="text-sm font-bold text-cyan-400 mt-2">$1</h4>').replace(/\*\*(.*?)\*\*/g, '<strong class="text-slate-100">$1</strong>')}
+          </div>
+        `;
+      } catch (err) {
+        content.innerHTML = `<div class="p-4 text-xs text-rose-400">Failed to generate AI strategy. Please check network connection.</div>`;
+      }
+    }
+
+    function closeAiModal() {
+      const modal = document.getElementById('aiModal');
+      if (modal) {
+        modal.classList.add('hidden');
+        modal.classList.remove('flex');
+      }
+    }
+
+    /* --- TAB & FILTER CONTROLLERS --- */
+    function switchLeftTab(tab) {
+      activeLeftTab = tab;
+      const advContent = document.getElementById('leftAdvisorContent');
+      const rosContent = document.getElementById('leftRosterContent');
+      const advBtn = document.getElementById('leftTabAdvisorBtn');
+      const rosBtn = document.getElementById('leftTabRosterBtn');
+
+      if (tab === 'advisor') {
+        if (advContent) advContent.classList.remove('hidden');
+        if (rosContent) rosContent.classList.add('hidden');
+        if (advBtn) {
+          advBtn.className = "flex-1 py-1.5 rounded-lg bg-emerald-600/90 text-white shadow transition flex items-center justify-center gap-1.5";
+        }
+        if (rosBtn) {
+          rosBtn.className = "flex-1 py-1.5 rounded-lg text-slate-400 hover:text-slate-200 hover:bg-[#121f3b] transition flex items-center justify-center gap-1.5";
+        }
+      } else {
+        if (advContent) advContent.classList.add('hidden');
+        if (rosContent) rosContent.classList.remove('hidden');
+        if (advBtn) {
+          advBtn.className = "flex-1 py-1.5 rounded-lg text-slate-400 hover:text-slate-200 hover:bg-[#121f3b] transition flex items-center justify-center gap-1.5";
+        }
+        if (rosBtn) {
+          rosBtn.className = "flex-1 py-1.5 rounded-lg bg-cyan-600/90 text-white shadow transition flex items-center justify-center gap-1.5";
+        }
+      }
+    }
+
+    function switchBoardView(view) {
+      activeBoardView = view;
+      const streamView = document.getElementById('boardStreamView');
+      const matrixView = document.getElementById('boardMatrixView');
+      const streamBtn = document.getElementById('viewStreamBtn');
+      const matrixBtn = document.getElementById('viewMatrixBtn');
+
+      if (view === 'stream') {
+        if (streamView) streamView.classList.remove('hidden');
+        if (matrixView) matrixView.classList.add('hidden');
+        if (streamBtn) streamBtn.className = "px-2.5 py-1 rounded-md bg-cyan-600 text-white shadow transition";
+        if (matrixBtn) matrixBtn.className = "px-2.5 py-1 rounded-md text-slate-400 hover:text-slate-200 transition";
+      } else {
+        if (streamView) streamView.classList.add('hidden');
+        if (matrixView) matrixView.classList.remove('hidden');
+        if (streamBtn) streamBtn.className = "px-2.5 py-1 rounded-md text-slate-400 hover:text-slate-200 transition";
+        if (matrixBtn) matrixBtn.className = "px-2.5 py-1 rounded-md bg-cyan-600 text-white shadow transition";
+      }
+    }
+
+    function switchMobileTab(tab) {
+      const pAdv = document.getElementById('panel-advisor');
+      const pPly = document.getElementById('panel-players');
+      const pBrd = document.getElementById('panel-board');
+
+      const tabs = ['advisor', 'players', 'board', 'roster'];
+      tabs.forEach(t => {
+        const btn = document.getElementById(`mTab-${t}`);
+        if (btn) {
+          if (t === tab) {
+            btn.className = "px-3 py-1.5 rounded-lg bg-emerald-500/20 text-emerald-400 border border-emerald-500/30 flex items-center gap-1";
+          } else {
+            btn.className = "px-3 py-1.5 rounded-lg text-slate-400 hover:text-slate-200 flex items-center gap-1";
+          }
+        }
+      });
+
+      if (pAdv) pAdv.classList.add('hidden', 'lg:flex');
+      if (pPly) pPly.classList.add('hidden', 'lg:flex');
+      if (pBrd) pBrd.classList.add('hidden', 'lg:flex');
+
+      if (tab === 'advisor') {
+        switchLeftTab('advisor');
+        if (pAdv) pAdv.classList.remove('hidden');
+      } else if (tab === 'roster') {
+        switchLeftTab('roster');
+        if (pAdv) pAdv.classList.remove('hidden');
+      } else if (tab === 'players') {
+        if (pPly) pPly.classList.remove('hidden');
+      } else if (tab === 'board') {
+        if (pBrd) pBrd.classList.remove('hidden');
+      }
+    }
+
+    function setPosFilter(pos) {
+      currentPosFilter = pos;
+      const btns = document.querySelectorAll('.pos-filter-btn');
+      btns.forEach(b => {
+        if (b.getAttribute('data-pos') === pos) {
+          b.className = "pos-filter-btn px-2.5 py-1 rounded-lg bg-emerald-500 text-slate-950 font-black text-xs transition";
+        } else {
+          b.className = "pos-filter-btn px-2 py-1 rounded-lg bg-[#0e1933] text-slate-300 hover:bg-[#16254b] font-bold text-xs transition";
+        }
+      });
+      renderPlayerPool();
+    }
+
+    function toggleHealthFilter() {
+      const label = document.getElementById('healthFilterLabel');
+      if (currentHealthFilter === 'ALL') {
+        currentHealthFilter = 'CLEAN';
+        if (label) label.textContent = 'Health: Clean Only';
+      } else if (currentHealthFilter === 'CLEAN') {
+        currentHealthFilter = 'RISK';
+        if (label) label.textContent = 'Health: Risk Only';
+      } else {
+        currentHealthFilter = 'ALL';
+        if (label) label.textContent = 'Health: All';
+      }
+      renderPlayerPool();
+    }
+
+    function handleSearchFilterChange() {
+      const searchInput = document.getElementById('playerSearchInput');
+      const sortSelect = document.getElementById('sortBySelect');
+
+      if (searchInput) currentSearchTerm = searchInput.value;
+      if (sortSelect) currentSortBy = sortSelect.value;
+
+      renderPlayerPool();
+    }
+
+    /* --- GLOBAL WINDOW BINDINGS --- */
+    window.draftPlayer = draftPlayer;
+    window.undoLastPick = undoLastPick;
+    window.simulateNextPick = simulateNextPick;
+    window.simulateToMyTurn = simulateToMyTurn;
+    window.openOpponentsModal = openOpponentsModal;
+    window.closeOpponentsModal = closeOpponentsModal;
+    window.openSettingsModal = openSettingsModal;
+    window.closeSettingsModal = closeSettingsModal;
+    window.selectDraftSlot = selectDraftSlot;
+    window.openRiskModal = openRiskModal;
+    window.closeRiskModal = closeRiskModal;
+    window.openResetModal = openResetModal;
+    window.closeResetModal = closeResetModal;
+    window.confirmResetDraft = confirmResetDraft;
+    window.requestAiAnalysis = requestAiAnalysis;
+    window.closeAiModal = closeAiModal;
+    window.switchLeftTab = switchLeftTab;
+    window.switchBoardView = switchBoardView;
+    window.switchMobileTab = switchMobileTab;
+    window.setPosFilter = setPosFilter;
+    window.toggleHealthFilter = toggleHealthFilter;
+    window.handleSearchFilterChange = handleSearchFilterChange;
+
+    /* Bootstrap Application */
+    window.addEventListener('DOMContentLoaded', () => {
+      updateAllUI();
+    });
+  </script>
+</body>
+</html>
